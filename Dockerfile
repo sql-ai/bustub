@@ -16,4 +16,5 @@ RUN apt-get -y update && \
       g++-7 \
       pkg-config \
       valgrind \
-      zlib1g-dev
+      zlib1g-dev \
+      gdbserver
