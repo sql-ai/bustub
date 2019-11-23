@@ -111,6 +111,7 @@ class Type {
  protected:
   // The actual type ID
   TypeId type_id_;
+  
   // Singleton instances.
   static Type *k_types[14];
 };
