@@ -67,6 +67,7 @@ Page *BufferPoolManager::FetchPageImpl(page_id_t page_id) {
   }
   // Insert P to page table
   page_table_[fid] = page_id;
+  replacer_->Pin(fid);
 
   // Update P's metadata, read in the page content from disk, and then return a pointer to P.
   pages_[fid].page_id_ = page_id;
@@ -139,6 +140,8 @@ Page *BufferPoolManager::NewPageImpl(page_id_t *page_id) {
 
   // Update P's metadata, zero out memory and add P to the page table.
   page_table_[*page_id] = fid;
+  replacer_->Pin(fid);
+
   pages_[fid].page_id_ = *page_id;
   pages_[fid].is_dirty_ = false;
   pages_[fid].pin_count_ = 1;
