@@ -9,21 +9,88 @@
 // Copyright (c) 2015-2019, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+//
+// This component is responsible for tracking page usage in the buffer pool. 
+// It is implemented as a new sub-class called ClockReplacer
+//      1. src/include/buffer/clock_replacer.h 
+//      2. src/buffer/clock_replacer.cpp. 
+
+// ClockReplacer extends the abstract Replacer class (src/include/buffer/replacer.h), 
+//  which contains the function specifications.
+
+// The ClockReplacer is initialized to contain placeholders for all of the frames in the BufferPoolManager. 
+//  The clock hand initially points to the placeholder of frame 0. 
+//  For each frame, ClockReplacer tracks two things: 
+//      1. Is this frame currently in the ClockReplacer? 
+//      2. Has this frame recently been unpinned (ref flag)?
+
+// In some scenarios, the two are the same. For example, when page is unpined, both of the above are true. 
+// However, a frame stays in the ClockReplacer until it is pinned or victimized, 
+// but its ref flag is modified by the clock hand.
+//===----------------------------------------------------------------------===//
 
 #include "buffer/clock_replacer.h"
 
 namespace bustub {
 
-ClockReplacer::ClockReplacer(size_t num_pages) {}
+using std::vector;
+ClockReplacer::ClockReplacer(size_t num_pages) : 
+    bits(vector<ClockBits>(num_pages)), hand(0)
+{
+    // TODO: do we need this?
+    for (int i = 0; i < num_pages; i++)
+    {
+        this->bits[i].b1 &= 0;
+        this->bits[i].b2 &= 0;
+    }
+}
 
 ClockReplacer::~ClockReplacer() = default;
 
-bool ClockReplacer::Victim(frame_id_t *frame_id) { return false; }
+// Starting from the current position of clock hand, find the first frame 
+// that is both in the ClockReplacer and with its ref flag set to false.
+// If a frame is in ClockReplacer, but its ref flag is set to true, change it to false instead.
+// This is the only method that updates the clock hand.
+bool ClockReplacer::Victim(frame_id_t *frame_id) 
+{ 
+    for (int i = 0; i <= 2*bits.size(); i++)
+    {
+        inc_hand();
+        // Find the frame that is in the Replacer (bits[hand].b2 == 0)
+        // and with its ref flag set to false.
+        if (bits[hand].b2 == 0 && bits[hand].b1 == 0)
+        {
+            *frame_id = hand;
+            bits[hand].b1 == 1;
+            return true;
+        } 
+        else if (bits[hand].b1 == 1) 
+        {
+            bits[hand].b1 == 0;
+        }        
+    }    
+    return false;
+}
 
-void ClockReplacer::Pin(frame_id_t frame_id) {}
+// This method should be called after a page is pinned to a frame in the BufferPoolManager. 
+// It removes the frame, set bits.b2=1, containing the pinned page from the ClockReplacer. 
+void ClockReplacer::Pin(frame_id_t frame_id) 
+{
+     this->bits[frame_id].b2 |= 1;
+     --sz;
+}
 
-void ClockReplacer::Unpin(frame_id_t frame_id) {}
+// This method should be called when the pin_count of a page becomes 0. 
+// It adds the frame containing the unpinned page to the ClockReplacer. 
+void ClockReplacer::Unpin(frame_id_t frame_id) 
+{
+     this->bits[frame_id].b2 &= 0;
+     ++sz;
+}
 
-size_t ClockReplacer::Size() { return 0; }
+size_t ClockReplacer::Size() 
+{ 
+    return sz; 
+}
 
 }  // namespace bustub

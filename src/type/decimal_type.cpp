@@ -65,7 +65,8 @@ namespace bustub {
 
 DecimalType::DecimalType() : NumericType(TypeId::DECIMAL) {}
 
-bool DecimalType::IsZero(const Value &val) const {
+bool DecimalType::IsZero(const Value &val) const 
+{
   assert(GetTypeId() == TypeId::DECIMAL);
   return (val.value_.decimal_ == 0);
 }
@@ -81,10 +82,12 @@ Value DecimalType::Add(const Value &left, const Value &right) const {
   throw Exception("type error");
 }
 
-Value DecimalType::Subtract(const Value &left, const Value &right) const {
+Value DecimalType::Subtract(const Value &left, const Value &right) const 
+{
   assert(GetTypeId() == TypeId::DECIMAL);
   assert(left.CheckComparable(right));
-  if (left.IsNull() || right.IsNull()) {
+  if (left.IsNull() || right.IsNull()) 
+  {
     return left.OperateNull(right);
   }
 
@@ -324,7 +327,8 @@ std::string DecimalType::ToString(const Value &val) const {
   return std::to_string(val.value_.decimal_);
 }
 
-void DecimalType::SerializeTo(const Value &val, char *storage) const {
+void DecimalType::SerializeTo(const Value &val, char *storage) const 
+{
   *reinterpret_cast<double *>(storage) = val.value_.decimal_;
 }
 
@@ -334,5 +338,9 @@ Value DecimalType::DeserializeFrom(const char *storage) const {
   return Value(type_id_, val);
 }
 
-Value DecimalType::Copy(const Value &val) const { return Value(TypeId::DECIMAL, val.value_.decimal_); }
+Value DecimalType::Copy(const Value &val) const 
+{ 
+  return Value(TypeId::DECIMAL, val.value_.decimal_); 
+}
+
 }  // namespace bustub

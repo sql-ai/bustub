@@ -169,7 +169,8 @@ Value Type::GetMaxValue(TypeId type_id) {
 }
 
 CmpBool Type::CompareEquals(const Value &left __attribute__((unused)),
-                            const Value &right __attribute__((unused))) const {
+                            const Value &right __attribute__((unused))) const 
+{
   throw NotImplementedException("CompareEquals not implemented");
 }
 
@@ -242,7 +243,8 @@ bool Type::IsInlined(const Value &val __attribute__((unused))) const {
 }
 
 // Return a stringified version of this value
-std::string Type::ToString(const Value &val __attribute__((unused))) const {
+std::string Type::ToString(const Value &val __attribute__((unused))) const 
+{
   throw NotImplementedException("ToString not implemented");
 }
 
@@ -261,7 +263,8 @@ Value Type::DeserializeFrom(const char *storage __attribute__((unused))) const {
 }
 
 // Create a copy of this value
-Value Type::Copy(const Value &val __attribute__((unused))) const {
+Value Type::Copy(const Value &val __attribute__((unused))) const 
+{
   throw NotImplementedException("Copy not implemented");
 }
 
@@ -275,7 +278,8 @@ const char *Type::GetData(const Value &val __attribute__((unused))) const {
 }
 
 // Get the length of the variable length data
-uint32_t Type::GetLength(const Value &val __attribute__((unused))) const {
+uint32_t Type::GetLength(const Value &val __attribute__((unused))) const 
+{
   throw NotImplementedException("GetLength not implemented");
 }
 

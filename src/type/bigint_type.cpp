@@ -67,10 +67,13 @@ BigintType::BigintType() : IntegerParentType(BIGINT) {}
 
 bool BigintType::IsZero(const Value &val) const { return (val.value_.bigint_ == 0); }
 
-Value BigintType::Add(const Value &left, const Value &right) const {
+Value BigintType::Add(const Value &left, const Value &right) const 
+{
   assert(left.CheckInteger());
   assert(left.CheckComparable(right));
-  if (left.IsNull() || right.IsNull()) {
+
+  if (left.IsNull() || right.IsNull()) 
+  {
     return left.OperateNull(right);
   }
 
@@ -162,13 +165,16 @@ Value BigintType::Sqrt(const Value &val) const {
   return Value(TypeId::DECIMAL, std::sqrt(val.value_.bigint_));
 }
 
-Value BigintType::OperateNull(const Value &left __attribute__((unused)), const Value &right) const {
-  switch (right.GetTypeId()) {
+Value BigintType::OperateNull(const Value &left __attribute__((unused)), const Value &right) const 
+{
+  switch (right.GetTypeId()) 
+  {
     case TypeId::TINYINT:
     case TypeId::SMALLINT:
     case TypeId::INTEGER:
     case TypeId::BIGINT:
       return Value(TypeId::BIGINT, static_cast<int64_t>(BUSTUB_INT64_NULL));
+
     case TypeId::DECIMAL:
       return Value(TypeId::DECIMAL, static_cast<double>(BUSTUB_DECIMAL_NULL));
     default:
@@ -177,11 +183,13 @@ Value BigintType::OperateNull(const Value &left __attribute__((unused)), const V
   throw Exception("type error");
 }
 
-CmpBool BigintType::CompareEquals(const Value &left, const Value &right) const {
+CmpBool BigintType::CompareEquals(const Value &left, const Value &right) const 
+{
   assert(left.CheckInteger());
   assert(left.CheckComparable(right));
 
-  if (left.IsNull() || right.IsNull()) {
+  if (left.IsNull() || right.IsNull()) 
+  {
     return CmpBool::CmpNull;
   }
 
@@ -249,12 +257,14 @@ CmpBool BigintType::CompareGreaterThanEquals(const Value &left, const Value &rig
   throw Exception("type error");
 }
 
-std::string BigintType::ToString(const Value &val) const {
+std::string BigintType::ToString(const Value &val) const 
+{
   assert(val.CheckInteger());
 
   if (val.IsNull()) {
     return "bigint_null";
   }
+  
   return std::to_string(val.value_.bigint_);
 }
 

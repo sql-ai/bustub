@@ -25,11 +25,15 @@ namespace bustub {
  * DiskManager takes care of the allocation and deallocation of pages within a database. It performs the reading and
  * writing of pages to and from disk, providing a logical file layer within the context of a database management system.
  */
-class DiskManager {
+class DiskManager 
+{
  public:
   /**
    * Creates a new disk manager that writes to the specified database file.
    * @param db_file the file name of the database file to write to
+   * db1
+   *    db1.mdf
+   *    db1.ldf 
    */
   explicit DiskManager(const std::string &db_file);
 
@@ -45,7 +49,10 @@ class DiskManager {
    * @param page_id id of the page
    * @param page_data raw page data
    */
-  void WritePage(page_id_t page_id, const char *page_data);
+  void WritePage
+  (
+      page_id_t page_id, const char *page_data
+  );
 
   /**
    * Read a page from the database file.

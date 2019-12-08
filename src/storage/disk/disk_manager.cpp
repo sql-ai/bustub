@@ -63,7 +63,8 @@ DiskManager::DiskManager(const std::string &db_file)
 /**
  * Close all file streams
  */
-void DiskManager::ShutDown() {
+void DiskManager::ShutDown() 
+{
   db_io_.close();
   log_io_.close();
 }
@@ -71,17 +72,24 @@ void DiskManager::ShutDown() {
 /**
  * Write the contents of the specified page into disk file
  */
-void DiskManager::WritePage(page_id_t page_id, const char *page_data) {
+void DiskManager::WritePage(
+    page_id_t page_id, 
+    const char *page_data) 
+{
   size_t offset = static_cast<size_t>(page_id) * PAGE_SIZE;
-  // set write cursor to offset
-  num_writes_ += 1;
-  db_io_.seekp(offset);
-  db_io_.write(page_data, PAGE_SIZE);
+
+  // set write cursor to offset  
+  num_writes_ += 1;  
+  db_io_.seekp(offset); // seek to 8192th byte from start of file db1.mdf 
+  db_io_.write(page_data, PAGE_SIZE); // write 4096 bytes from 0x81 to disk
+
   // check for I/O error
-  if (db_io_.bad()) {
+  if (db_io_.bad()) 
+  {
     LOG_DEBUG("I/O error while writing");
     return;
   }
+  
   // needs to flush to keep disk file in sync
   db_io_.flush();
 }
@@ -89,19 +97,26 @@ void DiskManager::WritePage(page_id_t page_id, const char *page_data) {
 /**
  * Read the contents of the specified page into the given memory area
  */
-void DiskManager::ReadPage(page_id_t page_id, char *page_data) {
+void DiskManager::ReadPage(
+    page_id_t page_id, 
+    char *page_data) 
+{
   int offset = page_id * PAGE_SIZE;
+
   // check if read beyond file length
-  if (offset > GetFileSize(file_name_)) {
+  if (offset > GetFileSize(file_name_)) 
+  {
     LOG_DEBUG("I/O error while reading");
-    // std::cerr << "I/O error while reading" << std::endl;
-  } else {
-    // set read cursor to offset
+  } 
+  else 
+  {
     db_io_.seekp(offset);
     db_io_.read(page_data, PAGE_SIZE);
+
     // if file ends before reading PAGE_SIZE
     int read_count = db_io_.gcount();
-    if (read_count < PAGE_SIZE) {
+    if (read_count < PAGE_SIZE) 
+    {
       LOG_DEBUG("Read less than a page");
       // std::cerr << "Read less than a page" << std::endl;
       memset(page_data + read_count, 0, PAGE_SIZE - read_count);
@@ -118,13 +133,15 @@ void DiskManager::WriteLog(char *log_data, int size) {
   assert(log_data != buffer_used);
   buffer_used = log_data;
 
-  if (size == 0) {  // no effect on num_flushes_ if log buffer is empty
+  if (size == 0) 
+  {  // no effect on num_flushes_ if log buffer is empty
     return;
   }
 
   flush_log_ = true;
 
-  if (flush_log_f_ != nullptr) {
+  if (flush_log_f_ != nullptr) 
+  {
     // used for checking non-blocking flushing
     assert(flush_log_f_->wait_for(std::chrono::seconds(10)) == std::future_status::ready);
   }
@@ -134,10 +151,12 @@ void DiskManager::WriteLog(char *log_data, int size) {
   log_io_.write(log_data, size);
 
   // check for I/O error
-  if (log_io_.bad()) {
+  if (log_io_.bad()) 
+  {
     LOG_DEBUG("I/O error while writing log");
     return;
   }
+
   // needs to flush to keep disk file in sync
   log_io_.flush();
   flush_log_ = false;
@@ -148,17 +167,23 @@ void DiskManager::WriteLog(char *log_data, int size) {
  * Always read from the beginning and perform sequence read
  * @return: false means already reach the end
  */
-bool DiskManager::ReadLog(char *log_data, int size, int offset) {
-  if (offset >= GetFileSize(log_name_)) {
-    // LOG_DEBUG("end of log file");
-    // LOG_DEBUG("file size is %d", GetFileSize(log_name_));
+bool DiskManager::ReadLog(
+    char *log_data, 
+    int size, 
+    int offset) 
+{
+  if (offset >= GetFileSize(log_name_)) 
+  {
     return false;
   }
+
   log_io_.seekp(offset);
   log_io_.read(log_data, size);
+
   // if log file ends before reading "size"
   int read_count = log_io_.gcount();
-  if (read_count < size) {
+  if (read_count < size) 
+  {
     log_io_.clear();
     memset(log_data + read_count, 0, size - read_count);
   }
@@ -170,7 +195,10 @@ bool DiskManager::ReadLog(char *log_data, int size, int offset) {
  * Allocate new page (operations like create index/table)
  * For now just keep an increasing counter
  */
-page_id_t DiskManager::AllocatePage() { return next_page_id_++; }
+page_id_t DiskManager::AllocatePage() 
+{ 
+  return next_page_id_++; 
+}
 
 /**
  * Deallocate page (operations like drop index/table)
@@ -197,7 +225,8 @@ bool DiskManager::GetFlushState() const { return flush_log_; }
 /**
  * Private helper function to get disk file size
  */
-int DiskManager::GetFileSize(const std::string &file_name) {
+int DiskManager::GetFileSize(const std::string &file_name) 
+{
   struct stat stat_buf;
   int rc = stat(file_name.c_str(), &stat_buf);
   return rc == 0 ? static_cast<int>(stat_buf.st_size) : -1;

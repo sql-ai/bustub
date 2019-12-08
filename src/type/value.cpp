@@ -211,21 +211,28 @@ Value::Value(TypeId type, float f) : Value(type) {
 }
 
 // VARCHAR
-Value::Value(TypeId type, const char *data, uint32_t len, bool manage_data) : Value(type) {
+Value::Value(TypeId type, const char *data, uint32_t len, bool manage_data) : Value(type) 
+{
   switch (type) {
     case TypeId::VARCHAR:
-      if (data == nullptr) {
+      if (data == nullptr) 
+      {
         value_.varlen_ = nullptr;
         size_.len_ = BUSTUB_VALUE_NULL;
-      } else {
+      } 
+      else 
+      {
         manage_data_ = manage_data;
-        if (manage_data_) {
+        if (manage_data_) 
+        {
           assert(len < BUSTUB_VARCHAR_MAX_LEN);
-          value_.varlen_ = new char[len];
+          value_.varlen_ = new char[len];          
           assert(value_.varlen_ != nullptr);
+
           size_.len_ = len;
           memcpy(value_.varlen_, data, len);
-        } else {
+        } else 
+        {
           // FUCK YOU GCC I do what I want.
           value_.const_varlen_ = data;
           size_.len_ = len;
@@ -237,14 +244,19 @@ Value::Value(TypeId type, const char *data, uint32_t len, bool manage_data) : Va
   }
 }
 
-Value::Value(TypeId type, const std::string &data) : Value(type) {
+Value::Value(TypeId type, const std::string &data) : Value(type) 
+{
   switch (type) {
-    case TypeId::VARCHAR: {
+    case TypeId::VARCHAR: 
+    {
       manage_data_ = true;
+
       // TODO(TAs): How to represent a null string here?
       uint32_t len = static_cast<uint32_t>(data.length()) + 1;
       value_.varlen_ = new char[len];
+
       assert(value_.varlen_ != nullptr);
+      
       size_.len_ = len;
       memcpy(value_.varlen_, data.c_str(), len);
       break;
@@ -255,10 +267,13 @@ Value::Value(TypeId type, const std::string &data) : Value(type) {
 }
 
 // delete allocated char array space
-Value::~Value() {
-  switch (type_id_) {
+Value::~Value() 
+{
+  switch (type_id_) 
+  {
     case TypeId::VARCHAR:
-      if (manage_data_) {
+      if (manage_data_) 
+      {
         delete[] value_.varlen_;
       }
       break;
@@ -267,7 +282,8 @@ Value::~Value() {
   }
 }
 
-bool Value::CheckComparable(const Value &o) const {
+bool Value::CheckComparable(const Value &o) const 
+{
   switch (GetTypeId()) {
     case TypeId::BOOLEAN:
       return (o.GetTypeId() == TypeId::BOOLEAN || o.GetTypeId() == TypeId::VARCHAR);
@@ -276,7 +292,8 @@ bool Value::CheckComparable(const Value &o) const {
     case TypeId::INTEGER:
     case TypeId::BIGINT:
     case TypeId::DECIMAL:
-      switch (o.GetTypeId()) {
+      switch (o.GetTypeId()) 
+      {
         case TypeId::TINYINT:
         case TypeId::SMALLINT:
         case TypeId::INTEGER:
@@ -298,7 +315,8 @@ bool Value::CheckComparable(const Value &o) const {
   return false;
 }
 
-bool Value::CheckInteger() const {
+bool Value::CheckInteger() const 
+{
   switch (GetTypeId()) {
     case TypeId::TINYINT:
     case TypeId::SMALLINT:
