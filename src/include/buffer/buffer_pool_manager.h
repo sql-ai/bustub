@@ -21,12 +21,45 @@
 #include "storage/disk/disk_manager.h"
 #include "storage/page/page.h"
 
-namespace bustub {
-
+namespace bustub 
+{
+    
 /**
  * BufferPoolManager reads disk pages to and from its internal buffer pool.
+ * 
+ * The BufferPoolManager is responsible for fetching database pages from the DiskManager 
+ * and storing them in memory. 
+ * 
+ * The BufferPoolManager can also write dirty pages to disk when it is either explicitly 
+ * instructed to do so or when it needs to evict a page to make space for a new page.
+ * 
+ * Code that actually reads and writes data to disk is implemented in the DiskManager.
+ * 
+ * All in-memory pages in the system are represented by Page objects. BufferPoolManager does not 
+ * need to understand the contents of pages. But it is important to understand that Page objects 
+ * are just containers for memory in the buffer pool and thus are not specific to a unique page. 
+ * 
+ * That is, each Page object contains a block of memory that the DiskManager will use as a location 
+ * to copy the contents of a physical page that it reads from disk. 
+ * 
+ * The BufferPoolManager will reuse the same Page object to store data as it moves back and forth 
+ * to disk. 
+ * 
+ * This means that the same Page object may contain a different physical page throughout the life of 
+ * the system. The Page object's identifer (page_id) keeps track of what physical page it contains; 
+ * if a Page object does not contain a physical page, then its page_id is set to INVALID_PAGE_ID.
+ * 
+ * Each Page object also maintains a counter for the number of threads that have "pinned" that page. 
+ * BufferPoolManager is not allowed to free a Page that is pinned. Each Page object also keeps track 
+ * of whether it is dirty or not. BufferPoolManager must knows whether a page was modified before it is unpinned. 
+ * 
+ * BufferPoolManager must write the contents of a dirty Page back to disk before that object can be reused.
+ * 
+ * This BufferPoolManager uses ClockReplacer to keep track of when Page objects are accessed so that it can 
+ * decide which one to evict when it must free a frame to make room for copying a new physical page from disk.
  */
-class BufferPoolManager {
+class BufferPoolManager 
+{
  public:
   enum class CallbackType { BEFORE, AFTER };    
   using bufferpool_callback_fn = void (*)(enum CallbackType, const page_id_t page_id);
@@ -57,7 +90,8 @@ class BufferPoolManager {
   }
 
   /** Grading function. Do not modify! */
-  bool UnpinPage(page_id_t page_id, bool is_dirty, bufferpool_callback_fn callback = nullptr) {
+  bool UnpinPage(page_id_t page_id, bool is_dirty, bufferpool_callback_fn callback = nullptr) 
+  {
     GradingCallback(callback, CallbackType::BEFORE, page_id);
     auto result = UnpinPageImpl(page_id, is_dirty);
     GradingCallback(callback, CallbackType::AFTER, page_id);
@@ -65,7 +99,8 @@ class BufferPoolManager {
   }
 
   /** Grading function. Do not modify! */
-  bool FlushPage(page_id_t page_id, bufferpool_callback_fn callback = nullptr) {
+  bool FlushPage(page_id_t page_id, bufferpool_callback_fn callback = nullptr) 
+  {
     GradingCallback(callback, CallbackType::BEFORE, page_id);
     auto result = FlushPageImpl(page_id);
     GradingCallback(callback, CallbackType::AFTER, page_id);
@@ -82,7 +117,8 @@ class BufferPoolManager {
   }
 
   /** Grading function. Do not modify! */
-  bool DeletePage(page_id_t page_id, bufferpool_callback_fn callback = nullptr) {
+  bool DeletePage(page_id_t page_id, bufferpool_callback_fn callback = nullptr) 
+  {
     GradingCallback(callback, CallbackType::BEFORE, page_id);
     auto result = DeletePageImpl(page_id);
     GradingCallback(callback, CallbackType::AFTER, page_id);
@@ -90,7 +126,8 @@ class BufferPoolManager {
   }
 
   /** Grading function. Do not modify! */
-  void FlushAllPages(bufferpool_callback_fn callback = nullptr) {
+  void FlushAllPages(bufferpool_callback_fn callback = nullptr) 
+  {
     GradingCallback(callback, CallbackType::BEFORE, INVALID_PAGE_ID);
     FlushAllPagesImpl();
     GradingCallback(callback, CallbackType::AFTER, INVALID_PAGE_ID);
@@ -123,37 +160,7 @@ class BufferPoolManager {
    * @param page_id id of page to be fetched
    * @return the requested page
    */
-  Page *FetchPageImpl(page_id_t page_id)
-  {
-    auto fid_iter = page_table_.find[page_id];
-    int fid;
-    if (fid_iter == page_table_.end())
-    {
-      if (free_list_.empty()) 
-      {
-        if (replacer_->Victim(&fid) == false) 
-        {
-          return nullptr;
-        }
-      } 
-      else 
-      {
-        fid = free_list_.back();        
-        free_list_.pop_back();
-      }
-
-      if (pages_[fid].IsDirty())
-      {
-        disk_manager_->WritePage(pages_[fid].GetPageId(),pages_[fid].GetData());
-      }
-      disk_manager_->ReadPage(page_id, pages_[fid].GetData());
-    }
-    else 
-    {
-      fid = *fid_iter;
-      return &pages_[fid];
-    }    
-  }
+  Page *FetchPageImpl(page_id_t page_id);
 
   /**
    * Unpin the target page from the buffer pool.

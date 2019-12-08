@@ -50,8 +50,36 @@ Page *BufferPoolManager::FetchPageImpl(page_id_t page_id)
   //        Note that pages are always found from the free list first.
   // 2.     If R is dirty, write it back to the disk.
   // 3.     Delete R from the page table and insert P.
-  // 4.     Update P's metadata, read in the page content from disk, and then return a pointer to P.
-  return nullptr;
+  // 4.     Update P's metadata, read in the page content from disk, and then return a pointer to P.  
+  int fid;
+  auto fid_iter = page_table_.find[page_id];
+  if (fid_iter != page_table_.end())
+  {
+    fid = *fid_iter;    
+    pages_[fid].pin_count_++;
+    return &pages_[fid];
+  }
+
+  if (!free_list_.empty())
+  {
+    fid = free_list_.back();
+    free_list_.pop_back();
+  }
+  else if (replacer_->Victim(&fid) == false)
+  {
+    return nullptr;
+  }
+
+  page_id_t old_page_id = pages_[fid].GetPageId();
+  if (pages_[fid].IsDirty())
+  {
+    disk_manager_->WritePage(old_page_id,pages_[fid].GetData());
+  }
+
+  page_table_.erase(old_page_id);
+  page_table_[page_id] = fid;
+  disk_manager_->ReadPage(page_id, pages_[fid].GetData());
+  pages_[fid].pin_count_ = 1;
 }
 
 bool BufferPoolManager::UnpinPageImpl(page_id_t page_id, bool is_dirty) 
@@ -74,7 +102,8 @@ Page *BufferPoolManager::NewPageImpl(page_id_t *page_id)
   return nullptr;
 }
 
-bool BufferPoolManager::DeletePageImpl(page_id_t page_id) {
+bool BufferPoolManager::DeletePageImpl(page_id_t page_id) 
+{
   // 0.   Make sure you call DiskManager::DeallocatePage!
   // 1.   Search the page table for the requested page (P).
   // 1.   If P does not exist, return true.
@@ -83,7 +112,8 @@ bool BufferPoolManager::DeletePageImpl(page_id_t page_id) {
   return false;
 }
 
-void BufferPoolManager::FlushAllPagesImpl() {
+void BufferPoolManager::FlushAllPagesImpl() 
+{
   // You can do it!
 }
 
