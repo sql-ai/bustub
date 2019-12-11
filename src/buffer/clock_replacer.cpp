@@ -35,13 +35,13 @@ namespace bustub {
 
 using std::vector;
 ClockReplacer::ClockReplacer(size_t num_pages) : 
-    bits(vector<ClockBits>(num_pages)), hand(0)
+    sz_(0), bits_(vector<ClockBits>(num_pages)), hand_(0)
 {
     // TODO: do we need this?
-    for (int i = 0; i < num_pages; i++)
+    for (size_t i = 0; i < num_pages; i++)
     {
-        this->bits[i].b1 &= 0;
-        this->bits[i].b2 &= 0;
+        this->bits_[i].ref = 0;
+        this->bits_[i].in_replacer = 0;
     }
 }
 
@@ -53,44 +53,56 @@ ClockReplacer::~ClockReplacer() = default;
 // This is the only method that updates the clock hand.
 bool ClockReplacer::Victim(frame_id_t *frame_id) 
 { 
-    for (int i = 0; i <= 2*bits.size(); i++)
+    for (size_t i = 0; i <= 2*bits_.size(); i++)
     {
         inc_hand();
-        // Find the frame that is in the Replacer (bits[hand].b2 == 0)
+        // Find the frame that is in the Replacer (bits[hand].ref == 0)
         // and with its ref flag set to false.
-        if (bits[hand].b2 == 0 && bits[hand].b1 == 0)
+        if (bits_[hand_].in_replacer == 1 && bits_[hand_].ref == 0)
         {
-            *frame_id = hand;
-            bits[hand].b1 == 1;
+            *frame_id = hand_;
+            bits_[hand_].ref = 1;
+            bits_[hand_].in_replacer = 0;
+            sz_--;
             return true;
         } 
-        else if (bits[hand].b1 == 1) 
+        else if (bits_[hand_].ref == 1)
         {
-            bits[hand].b1 == 0;
-        }        
+            bits_[hand_].ref = 0;
+        }
     }    
     return false;
 }
 
 // This method should be called after a page is pinned to a frame in the BufferPoolManager. 
-// It removes the frame, set bits.b2=1, containing the pinned page from the ClockReplacer. 
+// It removes the frame containing the pinned page from the ClockReplacer.
 void ClockReplacer::Pin(frame_id_t frame_id) 
 {
-     this->bits[frame_id].b2 |= 1;
-     --sz;
+    if (this->bits_[frame_id].in_replacer == 0) 
+    {
+        LOG_ERROR("Trying to pin on frame %d that is not in the replacer", frame_id);
+        return;
+    }
+    this->bits_[frame_id].in_replacer = 0;
+    --sz_;
 }
 
 // This method should be called when the pin_count of a page becomes 0. 
 // It adds the frame containing the unpinned page to the ClockReplacer. 
 void ClockReplacer::Unpin(frame_id_t frame_id) 
 {
-     this->bits[frame_id].b2 &= 0;
-     ++sz;
+    if (this->bits_[frame_id].in_replacer == 1) 
+    {
+        LOG_ERROR("Trying to unpin on frame %d that is already in the replacer", frame_id);
+        return;
+    }
+    this->bits_[frame_id].in_replacer = 1;
+    ++sz_;
 }
 
 size_t ClockReplacer::Size() 
 { 
-    return sz; 
+    return sz_; 
 }
 
 }  // namespace bustub

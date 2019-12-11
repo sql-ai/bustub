@@ -52,10 +52,10 @@ Page *BufferPoolManager::FetchPageImpl(page_id_t page_id)
   // 3.     Delete R from the page table and insert P.
   // 4.     Update P's metadata, read in the page content from disk, and then return a pointer to P.  
   int fid;
-  auto fid_iter = page_table_.find[page_id];
+  auto fid_iter = page_table_.find(page_id);
   if (fid_iter != page_table_.end())
   {
-    fid = *fid_iter;    
+    fid = fid_iter->second;
     pages_[fid].pin_count_++;
     return &pages_[fid];
   }
@@ -80,6 +80,7 @@ Page *BufferPoolManager::FetchPageImpl(page_id_t page_id)
   page_table_[page_id] = fid;
   disk_manager_->ReadPage(page_id, pages_[fid].GetData());
   pages_[fid].pin_count_ = 1;
+  return &pages_[fid];
 }
 
 bool BufferPoolManager::UnpinPageImpl(page_id_t page_id, bool is_dirty) 

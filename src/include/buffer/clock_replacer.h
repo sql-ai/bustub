@@ -18,15 +18,17 @@
 
 #include "buffer/replacer.h"
 #include "common/config.h"
+#include "common/logger.h"
 
 namespace bustub {
 
 typedef struct 
 {   
-    // b1 is the ref-flag
-    unsigned char b1 : 1;
-    // b2 indicates if the frame is in the replacer
-    unsigned char b2 : 1;
+    // ref is the ref-flag
+    unsigned char ref : 1;
+
+    // indicates if the frame is NOT in the replacer
+    unsigned char in_replacer : 1;
 } ClockBits;
 
 /**
@@ -67,17 +69,17 @@ class ClockReplacer : public Replacer {
   size_t Size() override;
 
  private:
-    size_t sz;
-    std::vector<ClockBits> bits;
-    uint32_t hand;
+    size_t sz_;
+    std::vector<ClockBits> bits_;
+    uint32_t hand_;
     int inc_hand() 
     {
-        hand++;
-        if (hand == bits.size()) 
+        hand_++;
+        if (hand_ == bits_.size()) 
         {
-            hand = 0;
+            hand_ = 0;
         }
-        return hand;
+        return hand_;
     }
 };
 

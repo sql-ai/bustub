@@ -19,7 +19,7 @@
 namespace bustub {
 
 // NOLINTNEXTLINE
-TEST(BufferPoolManagerTest, DISABLED_SampleTest) {
+TEST(BufferPoolManagerTest, SampleTest) {
   const std::string db_name = "test.db";
   const size_t buffer_pool_size = 10;
 
@@ -38,7 +38,8 @@ TEST(BufferPoolManagerTest, DISABLED_SampleTest) {
   EXPECT_EQ(0, strcmp(page0->GetData(), "Hello"));
 
   // Scenario: We should be able to create new pages until we fill up the buffer pool.
-  for (size_t i = 1; i < buffer_pool_size; ++i) {
+  for (size_t i = 1; i < buffer_pool_size; ++i) 
+  {
     EXPECT_NE(nullptr, bpm->NewPage(&page_id_temp));
   }
 
@@ -49,10 +50,13 @@ TEST(BufferPoolManagerTest, DISABLED_SampleTest) {
 
   // Scenario: After unpinning pages {0, 1, 2, 3, 4} and pinning another 4 new pages,
   // there would still be one buffer page left for reading page 0.
-  for (int i = 0; i < 5; ++i) {
+  for (int i = 0; i < 5; ++i) 
+  {
     EXPECT_EQ(true, bpm->UnpinPage(i, true));
   }
-  for (int i = 0; i < 4; ++i) {
+
+  for (int i = 0; i < 4; ++i) 
+  {
     EXPECT_NE(nullptr, bpm->NewPage(&page_id_temp));
   }
 
