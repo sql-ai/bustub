@@ -52,25 +52,31 @@ ClockReplacer::~ClockReplacer() = default;
 // If a frame is in ClockReplacer, but its ref flag is set to true, change it to false instead.
 // This is the only method that updates the clock hand.
 bool ClockReplacer::Victim(frame_id_t *frame_id) 
-{ 
+{
+    if (sz_ == 0)
+    {
+        return false;
+    }
+    
     for (size_t i = 0; i <= 2*bits_.size(); i++)
     {
         inc_hand();
-        // Find the frame that is in the Replacer (bits[hand].ref == 0)
-        // and with its ref flag set to false.
-        if (bits_[hand_].in_replacer == 1 && bits_[hand_].ref == 0)
-        {
+
+        if (bits_[hand_].in_replacer == 0) continue;
+
+        if (bits_[hand_].ref == 0) {
             *frame_id = hand_;
             bits_[hand_].ref = 1;
             bits_[hand_].in_replacer = 0;
             sz_--;
             return true;
-        } 
-        else if (bits_[hand_].ref == 1)
+        }
+        else
         {
             bits_[hand_].ref = 0;
         }
-    }    
+    }
+
     return false;
 }
 
