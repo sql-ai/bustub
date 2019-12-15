@@ -97,6 +97,7 @@ void ClockReplacer::Unpin(frame_id_t frame_id)
         return;
     }
     this->bits_[frame_id].in_replacer = 1;
+    this->bits_[frame_id].ref = 1;
     ++sz_;
 }
 
