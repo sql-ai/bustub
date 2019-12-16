@@ -19,7 +19,8 @@
 namespace bustub {
 
 // NOLINTNEXTLINE
-TEST(BufferPoolManagerTest, SampleTest) {
+TEST(BufferPoolManagerTest, SampleTest) 
+{
   const std::string db_name = "test.db";
   const size_t buffer_pool_size = 10;
 
@@ -44,7 +45,8 @@ TEST(BufferPoolManagerTest, SampleTest) {
   }
 
   // Scenario: Once the buffer pool is full, we should not be able to create any new pages.
-  for (size_t i = buffer_pool_size; i < buffer_pool_size * 2; ++i) {
+  for (size_t i = buffer_pool_size; i < buffer_pool_size * 2; ++i) 
+  {
     EXPECT_EQ(nullptr, bpm->NewPage(&page_id_temp));
   }
 
@@ -63,6 +65,7 @@ TEST(BufferPoolManagerTest, SampleTest) {
   // Scenario: We should be able to fetch the data we wrote a while ago.
   page0 = bpm->FetchPage(0);
   EXPECT_EQ(0, strcmp(page0->GetData(), "Hello"));
+
 
   // Scenario: If we unpin page 0 and then make a new page, all the buffer pages should
   // now be pinned. Fetching page 0 should fail.
