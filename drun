@@ -1,2 +1,3 @@
 #!/bin/bash -e
-docker run -m 4G --hostname=cmu.db --privileged=true -t -i -v $(pwd):/src --publish-all=true -p9091:9091 $1 bash
+# --mount source=vscode-server,target=/root
+docker run -m 4G --privileged=true -ti --name cmudb -v $(pwd):/bustub --mount source=vscode-server,target=/root $1 bash 
