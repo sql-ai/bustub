@@ -30,8 +30,27 @@ namespace bustub {
 
 /**
  * Implementation of linear probing hash table that is backed by a buffer pool
- * manager. Non-unique keys are supported. Supports insert and delete. The
- * table dynamically grows once full.
+ * manager. Non-unique keys are supported. 
+ * 
+ * Supports insertions (Insert), point search (GetValue), and deletions (Remove).
+ * 
+ * The table dynamically grows once full.
+ * 
+ * Support both unique and non-unique keys. Duplicate values for the same key are not allowed. 
+ * I.e. (key_0, value_0) and (key_0, value_1) can exist in the same table, but not (key_0, value_0) and (key_0, value_0)
+ * 
+ * Deps:
+ *  KeyType: 
+ *    The type of each key in the hash table. This will only be GenericKey, 
+ *    the actual size of GenericKey is specified and instantiated with a template argument 
+ *    and depends on the data type of indexed attribute.
+ * 
+ * ValueType: 
+ *    The type of each value in the hash table. This will only be 64-bit RID.
+ * 
+ * KeyComparator: 
+ *    The class used to compare whether two KeyType instances are less/greater-than each other. 
+ *    These are included in the KeyType implementation files.
  */
 template <typename KeyType, typename ValueType, typename KeyComparator>
 class LinearProbeHashTable : public HashTable<KeyType, ValueType, KeyComparator> {
@@ -44,8 +63,12 @@ class LinearProbeHashTable : public HashTable<KeyType, ValueType, KeyComparator>
    * @param num_buckets initial number of buckets contained by this hash table
    * @param hash_fn the hash function
    */
-  explicit LinearProbeHashTable(const std::string &name, BufferPoolManager *buffer_pool_manager,
-                                const KeyComparator &comparator, size_t num_buckets, HashFunction<KeyType> hash_fn);
+  explicit LinearProbeHashTable(
+      const std::string &name, 
+      BufferPoolManager *buffer_pool_manager,
+      const KeyComparator &comparator, 
+      size_t num_buckets,
+      HashFunction<KeyType> hash_fn);
 
   /**
    * Inserts a key-value pair into the hash table.
@@ -54,7 +77,10 @@ class LinearProbeHashTable : public HashTable<KeyType, ValueType, KeyComparator>
    * @param value the value to be associated with the key
    * @return true if insert succeeded, false otherwise
    */
-  bool Insert(Transaction *transaction, const KeyType &key, const ValueType &value) override;
+  bool Insert(
+        Transaction *transaction, 
+        const KeyType &key, 
+        const ValueType &value) override;
 
   /**
    * Deletes the associated value for the given key.
@@ -63,7 +89,9 @@ class LinearProbeHashTable : public HashTable<KeyType, ValueType, KeyComparator>
    * @param value the value to delete
    * @return true if remove succeeded, false otherwise
    */
-  bool Remove(Transaction *transaction, const KeyType &key, const ValueType &value) override;
+  bool Remove(Transaction *transaction, 
+    const KeyType &key, 
+    const ValueType &value) override;
 
   /**
    * Performs a point query on the hash table.
@@ -72,7 +100,9 @@ class LinearProbeHashTable : public HashTable<KeyType, ValueType, KeyComparator>
    * @param[out] result the value(s) associated with a given key
    * @return the value(s) associated with the given key
    */
-  bool GetValue(Transaction *transaction, const KeyType &key, std::vector<ValueType> *result) override;
+  bool GetValue(Transaction *transaction, 
+    const KeyType &key, 
+    std::vector<ValueType> *result) override;
 
   /**
    * Resizes the table to at least twice the initial size provided.

@@ -32,6 +32,22 @@ namespace bustub {
  *
  *  Here '+' means concatenation.
  *
+ * The Hash Table Block Page holds three arrays:
+ *    occupied_ : The ith bit of occupied_ is 1 if the ith index of array_ has ever been occupied.
+ *    readable_ : The ith bit of readable_ is 1 if the ith index of array_ holds a readable value.
+ *    array_ : The array that holds the key-value pairs.
+ * 
+ * The number of slots available in a Hash Table Block Page depends on the types of the keys and values being stored. 
+ * Only support fixed-length keys and values. 
+ * 
+ * The size of keys/values will be the same within a single hash table instance, but NOT the same for all instances 
+ *  e.g. hash table #1 can have 32-bit keys and hash table #2 can have 64-bit keys.
+ * 
+ * Each Hash Table Header page and each  Hash Table Block page corresponds to the content (i.e., the byte array data_) 
+ * of a memory page fetched by buffer pool. 
+ * 
+ * Before trying to read or write a page, first fetch the page from buffer pool using its page_id, 
+ * then reinterpret cast to either a header or a block page, and unpin the page after any writing or reading operations.
  */
 template <typename KeyType, typename ValueType, typename KeyComparator>
 class HashTableBlockPage {
@@ -95,10 +111,8 @@ class HashTableBlockPage {
 
  private:
   std::atomic_char occupied_[(BLOCK_ARRAY_SIZE - 1) / 8 + 1];
-
-  // 0 if tombstone/brand new (never occupied), 1 otherwise.
   std::atomic_char readable_[(BLOCK_ARRAY_SIZE - 1) / 8 + 1];
-  MappingType array_[0];
+  MappingType array_[BLOCK_ARRAY_SIZE];
 };
 
 }  // namespace bustub

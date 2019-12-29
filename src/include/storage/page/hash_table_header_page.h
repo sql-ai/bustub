@@ -90,11 +90,27 @@ class HashTableHeaderPage {
   size_t NumBlocks();
 
  private:
-  __attribute__((unused)) lsn_t lsn_;
-  __attribute__((unused)) size_t size_;
-  __attribute__((unused)) page_id_t page_id_;
-  __attribute__((unused)) size_t next_ind_;
-  __attribute__((unused)) page_id_t block_page_ids_[0];
+/**
+ * Header format (size in byte, 16 bytes in total):
+ * -------------------------------------------------------------
+ * | LSN (4) | Size (4) | PageId(4) | NextBlockIndex(4)
+ * -------------------------------------------------------------
+ */
+
+  // Log sequence number
+  lsn_t lsn_;
+
+  // Number of Key & Value pairs the hash table can hold
+  int32_t size_;
+
+  // Self Page Id
+  page_id_t page_id_;
+
+  // The next index to add a new entry to block_page_ids_
+  int32_t next_ind_;
+
+  // block_page_ids_[i] returns page_id for block i
+  page_id_t block_page_ids_[(PAGE_SIZE-16)/sizeof(page_id_t)];
 };
 
 }  // namespace bustub
