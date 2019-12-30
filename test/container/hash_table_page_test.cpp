@@ -23,7 +23,7 @@
 namespace bustub {
 
 // NOLINTNEXTLINE
-TEST(HashTablePageTest, DISABLED_HeaderPageSampleTest) {
+TEST(HashTablePageTest, HeaderPageSampleTest) {
   DiskManager *disk_manager = new DiskManager("test.db");
   auto *bpm = new BufferPoolManager(5, disk_manager);
 
@@ -61,7 +61,8 @@ TEST(HashTablePageTest, DISABLED_HeaderPageSampleTest) {
 }
 
 // NOLINTNEXTLINE
-TEST(HashTablePageTest, DISABLED_BlockPageSampleTest) {
+TEST(HashTablePageTest, BlockPageSampleTest) 
+{
   DiskManager *disk_manager = new DiskManager("test.db");
   auto *bpm = new BufferPoolManager(5, disk_manager);
 
@@ -72,26 +73,32 @@ TEST(HashTablePageTest, DISABLED_BlockPageSampleTest) {
       reinterpret_cast<HashTableBlockPage<int, int, IntComparator> *>(bpm->NewPage(&block_page_id, nullptr)->GetData());
 
   // insert a few (key, value) pairs
-  for (unsigned i = 0; i < 10; i++) {
+  for (unsigned i = 0; i < 10; i++) 
+  {
     block_page->Insert(i, i, i);
   }
 
   // check for the inserted pairs
-  for (unsigned i = 0; i < 10; i++) {
+  for (unsigned i = 0; i < 10; i++) 
+  {
     EXPECT_EQ(i, block_page->KeyAt(i));
     EXPECT_EQ(i, block_page->ValueAt(i));
   }
 
   // remove a few pairs
-  for (unsigned i = 0; i < 10; i++) {
-    if (i % 2 == 1) {
+  for (unsigned i = 0; i < 10; i++) 
+  {
+    if (i % 2 == 1) 
+    {
       block_page->Remove(i);
     }
   }
 
   // check for the flags
-  for (unsigned i = 0; i < 15; i++) {
-    if (i < 10) {
+  for (unsigned i = 0; i < 15; i++) 
+  {
+    if (i < 10) 
+    {
       EXPECT_TRUE(block_page->IsOccupied(i));
       if (i % 2 == 1) {
         EXPECT_FALSE(block_page->IsReadable(i));

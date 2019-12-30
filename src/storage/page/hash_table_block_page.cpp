@@ -47,7 +47,10 @@ ValueType HASH_TABLE_BLOCK_TYPE::ValueAt(slot_offset_t bucket_ind) const
  * Insert returns false.
  */
 template <typename KeyType, typename ValueType, typename KeyComparator>
-bool HASH_TABLE_BLOCK_TYPE::Insert(slot_offset_t bucket_ind, const KeyType &key, const ValueType &value) 
+bool HASH_TABLE_BLOCK_TYPE::Insert(
+  slot_offset_t bucket_ind, 
+  const KeyType &key, 
+  const ValueType &value) 
 {
   // TODO: Implement thread-safe version.
   int i = bucket_ind / 8;
@@ -59,7 +62,7 @@ bool HASH_TABLE_BLOCK_TYPE::Insert(slot_offset_t bucket_ind, const KeyType &key,
     return false;    
   }
 
-  MappingType kv = std::make_pair<KeyType, ValueType>(key, value);
+  MappingType kv = std::make_pair(key, value);
   array_[bucket_ind] = kv;
 
   // Set kth bit from ith byte to 1. 
@@ -79,7 +82,7 @@ void HASH_TABLE_BLOCK_TYPE::Remove(slot_offset_t bucket_ind)
   int i = bucket_ind / 8;
   int k = bucket_ind % 8;
   // set kth bit from ith byte to 0.
-  readable_[i] &= (1 << k);
+  readable_[i] &= ~(1 << k);
 }
 
 template <typename KeyType, typename ValueType, typename KeyComparator>

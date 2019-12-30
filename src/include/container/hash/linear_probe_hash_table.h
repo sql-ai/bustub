@@ -119,8 +119,19 @@ class LinearProbeHashTable : public HashTable<KeyType, ValueType, KeyComparator>
  private:
   // member variable
   page_id_t header_page_id_;
+
+  HashTableHeaderPage *header_page_;
   BufferPoolManager *buffer_pool_manager_;
   KeyComparator comparator_;
+
+  // Number of key/value pairs.
+  size_t sz_;
+
+  // Number of blocks
+  size_t num_pages_;
+
+  // Capacity, number of buckets 
+  size_t num_buckets_;
 
   // Readers includes inserts and removes, writer is only resize
   ReaderWriterLatch table_latch_;
