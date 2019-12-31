@@ -12,18 +12,15 @@
 
 #include "buffer/clock_replacer.h"
 #include "common/logger.h"
+#include <cstring>
 
 namespace bustub {
 
 ClockReplacer::ClockReplacer(size_t num_pages) : hand_(0), num_pages_(num_pages), sz_(0) {
     in_replacer_ = new bool[num_pages];
-    for (size_t i = 0; i < num_pages; i++) {
-        in_replacer_[i] = false;
-    }
+    memset(in_replacer_, 0, num_pages * sizeof(bool));
     ref_ = new bool[num_pages];
-    for (size_t i = 0; i < num_pages; i++) {
-        ref_[i] = false;
-    }
+    memset(ref_, 0, num_pages * sizeof(bool));
 }
 
 ClockReplacer::~ClockReplacer() {
