@@ -1,0 +1,2 @@
+#!/bin/bash -e
+docker run -m 4G --hostname=cmu.db --name=cmudb --privileged=true -it -v $(pwd):/bustub --publish-all=true -p9091:9091 $1 bash
