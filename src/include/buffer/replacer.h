@@ -17,7 +17,7 @@
 namespace bustub {
 
 /**
- * Replacer is an abstract class that tracks page usage.
+ * Replacer is an abstract class that tracks page usage in the buffer pool.
  */
 class Replacer {
  public:
@@ -25,7 +25,7 @@ class Replacer {
   virtual ~Replacer() = default;
 
   /**
-   * Remove the victim frame as defined by the replacement policy.
+   * Removes the victim frame as defined by the replacement policy.
    * @param[out] frame_id id of frame that was removed, nullptr if no victim was found
    * @return true if a victim frame was found, false otherwise
    */

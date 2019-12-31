@@ -27,7 +27,7 @@ namespace bustub {
 class ClockReplacer : public Replacer {
  public:
   /**
-   * Create a new ClockReplacer.
+   * Creates a new ClockReplacer.
    * @param num_pages the maximum number of pages the ClockReplacer will be required to store
    */
   explicit ClockReplacer(size_t num_pages);
@@ -46,7 +46,11 @@ class ClockReplacer : public Replacer {
   size_t Size() override;
 
  private:
-  // TODO(student): implement me!
+  bool *in_replacer_;
+  bool *ref_;
+  size_t hand_;
+  size_t num_pages_;
+  size_t sz_;
 };
 
 }  // namespace bustub
