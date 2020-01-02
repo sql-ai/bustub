@@ -86,7 +86,7 @@ void ClockReplacer::Pin(frame_id_t frame_id)
 {
     if (this->bits_[frame_id].in_replacer == 0) 
     {
-        LOG_ERROR("Trying to pin on frame %d that is not in the replacer", frame_id);
+        // LOG_DEBUG("Trying to pin on frame %d that is not in the replacer", frame_id);
         return;
     }
     this->bits_[frame_id].in_replacer = 0;
@@ -99,7 +99,7 @@ void ClockReplacer::Unpin(frame_id_t frame_id)
 {
     if (this->bits_[frame_id].in_replacer == 1) 
     {
-        LOG_ERROR("Trying to unpin on frame %d that is already in the replacer", frame_id);
+        // LOG_DEBUG("Trying to unpin on frame %d that is already in the replacer", frame_id);
         return;
     }
     this->bits_[frame_id].in_replacer = 1;

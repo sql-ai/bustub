@@ -102,7 +102,7 @@ bool BufferPoolManager::UnpinPageImpl(page_id_t page_id, bool is_dirty)
   {
     replacer_->Unpin(fid);
   }
-  pages_[fid].is_dirty_ = is_dirty;
+  pages_[fid].is_dirty_ |= is_dirty;
   return true;
 }
 

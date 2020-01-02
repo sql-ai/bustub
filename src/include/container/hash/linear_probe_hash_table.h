@@ -39,6 +39,21 @@ namespace bustub {
  * Support both unique and non-unique keys. Duplicate values for the same key are not allowed. 
  * I.e. (key_0, value_0) and (key_0, value_1) can exist in the same table, but not (key_0, value_0) and (key_0, value_0)
  * 
+ * Support multiple threads reading/writing the table at the same time.
+ * 
+ * Have latches on each block so that when one thread is writing to a block other threads are not reading 
+ * or modifying that index as well. 
+ * 
+ * Allow multiple readers to be reading the same block at the same time.
+ * 
+ *  A latch the whole hash table when need to resize. When resize is called, the size that 
+ *  the table was when resize was called is passed in as an argument. 
+ *  This is so that if the table was resized while a thread was waiting for the latch, 
+ *  it can immediately give up the latch and attempt insertion again.
+ * 
+ *  Do not use a global scope latch to protect data structure for each operation. 
+ *  Do not lock the whole container and only unlock the latch when operations are done.
+ * 
  * Deps:
  *  KeyType: 
  *    The type of each key in the hash table. This will only be GenericKey, 
@@ -55,6 +70,9 @@ namespace bustub {
 template <typename KeyType, typename ValueType, typename KeyComparator>
 class LinearProbeHashTable : public HashTable<KeyType, ValueType, KeyComparator> {
  public:
+    // member variable
+    page_id_t header_page_id_;
+
   /**
    * Creates a new LinearProbeHashTable
    *
@@ -63,12 +81,29 @@ class LinearProbeHashTable : public HashTable<KeyType, ValueType, KeyComparator>
    * @param num_buckets initial number of buckets contained by this hash table
    * @param hash_fn the hash function
    */
-  explicit LinearProbeHashTable(
+  explicit LinearProbeHashTable (
       const std::string &name, 
       BufferPoolManager *buffer_pool_manager,
       const KeyComparator &comparator, 
       size_t num_buckets,
       HashFunction<KeyType> hash_fn);
+
+  /**
+   * Creates a new LinearProbeHashTable
+   *
+   * @param buffer_pool_manager buffer pool manager to be used
+   * @param comparator comparator for keys
+   * @param header_page the page id of the header page
+   * @param hash_fn the hash function
+   */
+  explicit LinearProbeHashTable (
+      const std::string &name,
+      BufferPoolManager *buffer_pool_manager,
+      const KeyComparator &comparator,
+      page_id_t header_page,
+      HashFunction<KeyType> hash_fn
+  );
+
 
   /**
    * Inserts a key-value pair into the hash table.
@@ -117,8 +152,6 @@ class LinearProbeHashTable : public HashTable<KeyType, ValueType, KeyComparator>
   size_t GetSize();
 
  private:
-  // member variable
-  page_id_t header_page_id_;
 
   HashTableHeaderPage *header_page_;
   BufferPoolManager *buffer_pool_manager_;

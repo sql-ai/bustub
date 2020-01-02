@@ -31,8 +31,8 @@ class Page {
 
  public:
   /** Constructor. Zeros out the page data. */
-  Page() 
-  { 
+  Page()
+  {
     ResetMemory(); 
   }
 
@@ -85,13 +85,6 @@ class Page {
   inline void RUnlatch() 
   { 
     rwlatch_.RUnlock(); 
-    // proximate LRU as known as ClockReplacer
-
-    // ACID properties 
-    // Atomicity, Consistency, Islolation, Durability 
-
-    // LogManager R(A), W(a), D(A)
-    
   }
 
   /** @return the page LSN. */

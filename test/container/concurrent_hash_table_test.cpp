@@ -53,10 +53,10 @@ void InsertHelper(LinearProbeHashTable<int, int, IntComparator> &ht,
 }
 
 // NOLINTNEXTLINE
-TEST(ConcurrentHashTableTest, ConcurrentTest) 
+TEST(ConcurrentHashTableTest, DISABLED_ConcurrentTest) 
 {
   auto *disk_manager = new DiskManager("test.db");
-  auto *bpm = new BufferPoolManager(100, disk_manager);
+  auto *bpm = new BufferPoolManager(30, disk_manager);
 
   LinearProbeHashTable<int, int, IntComparator> ht("blah", bpm, IntComparator(), 10000, HashFunction<int>());  
   std::vector<int> keys;
@@ -66,7 +66,7 @@ TEST(ConcurrentHashTableTest, ConcurrentTest)
     keys.push_back(i);
   }
 
-  LaunchParallelTest(90, InsertHelper, std::ref(ht), keys);
+  LaunchParallelTest(9, InsertHelper, std::ref(ht), keys);
 
   for (auto key: keys)
   {
@@ -79,7 +79,7 @@ TEST(ConcurrentHashTableTest, ConcurrentTest)
       {
         s = s + ", " + std::to_string(x);
       }
-      EXPECT_EQ(90, res.size()) << "Failed key  " << key << ", values " << s << std::endl;;
+      EXPECT_EQ(9, res.size()) << "Failed key  " << key << ", values " << s << std::endl;;
     }
   }
   
@@ -87,6 +87,51 @@ TEST(ConcurrentHashTableTest, ConcurrentTest)
   remove("test.db");
   delete disk_manager;
   delete bpm;
+}
+
+// NOLINTNEXTLINE
+TEST(ConcurrentHashTableTest, RestartableConcurrentTest) 
+{
+  auto *disk_manager = new DiskManager("RestartableConcurrentTest.db");
+  auto *bpm = new BufferPoolManager(10, disk_manager);
+
+  LinearProbeHashTable<int, int, IntComparator> ht("blah", bpm, IntComparator(), 10000, HashFunction<int>());  
+  std::vector<int> keys;
+
+  for (int i = 0; i < 111; i++)
+  {
+    keys.push_back(i);
+  }
+
+  LaunchParallelTest(9, InsertHelper, std::ref(ht), keys);
+  bpm->FlushAllPages();
+  disk_manager->ShutDown();
+  delete disk_manager;
+  delete bpm;
+
+  auto *disk_manager2 = new DiskManager("RestartableConcurrentTest.db");
+  auto *bpm2 = new BufferPoolManager(30, disk_manager2);
+  page_id_t header_page_id = ht.header_page_id_;
+  LinearProbeHashTable<int, int, IntComparator> ht2("blah2", bpm2, IntComparator(), header_page_id, HashFunction<int>());
+
+  for (auto key: keys)
+  {
+    if (key > 0)
+    {
+      std::vector<int> res;
+      ht2.GetValue(nullptr, key, &res);
+      std::string s;
+      for (auto x : res)
+      {
+        s = s + ", " + std::to_string(x);
+      }
+      EXPECT_EQ(9, res.size()) << "Failed key  " << key << ", values " << s << std::endl;;
+    }
+  }
+  
+  disk_manager2->ShutDown();
+  delete disk_manager2;
+  delete bpm2;
 }
 
 }  // namespace bustub

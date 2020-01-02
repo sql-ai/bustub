@@ -28,6 +28,23 @@ HASH_TABLE_TYPE::LinearProbeHashTable
     const std::string &name,
     BufferPoolManager *buffer_pool_manager,
     const KeyComparator &comparator,
+    page_id_t header_page,
+    HashFunction<KeyType> hash_fn
+) : header_page_id_(header_page),
+    buffer_pool_manager_(buffer_pool_manager),
+    comparator_(comparator),
+    hash_fn_(std::move(hash_fn))
+{
+  header_page_ = reinterpret_cast<HashTableHeaderPage *>(buffer_pool_manager_->FetchPage(header_page_id_)->GetData());
+  num_pages_ = header_page_->NumBlocks();  
+}
+
+template <typename KeyType, typename ValueType, typename KeyComparator>
+HASH_TABLE_TYPE::LinearProbeHashTable
+(
+    const std::string &name,
+    BufferPoolManager *buffer_pool_manager,
+    const KeyComparator &comparator,
     size_t num_buckets,
     HashFunction<KeyType> hash_fn
 ) : buffer_pool_manager_(buffer_pool_manager),
@@ -36,8 +53,7 @@ HASH_TABLE_TYPE::LinearProbeHashTable
     num_buckets_(num_buckets),    
     hash_fn_(std::move(hash_fn))
 {
-  // TODO: Check below command
-  // header_page_ = reinterpret_cast<HashTableHeaderPage *>(buffer_pool_manager_->NewPage(&header_page_id_));
+  
   header_page_ = reinterpret_cast<HashTableHeaderPage *>(buffer_pool_manager_->NewPage(&header_page_id_)->GetData());
   header_page_->SetSize(num_buckets);
   num_pages_ = (num_buckets_ -1) / BLOCK_ARRAY_SIZE + 1; 
@@ -69,13 +85,18 @@ bool HASH_TABLE_TYPE::GetValue(
   for (size_t i = 0; i < num_buckets_; i++)
   {
     auto block_id = global_bucket_idx / BLOCK_ARRAY_SIZE;
-    auto slot_id  = global_bucket_idx % BLOCK_ARRAY_SIZE;
     page_id_t block_page_id = header_page_->GetBlockPageId(block_id);
-    HASH_TABLE_BLOCK_TYPE *block_page = reinterpret_cast<HASH_TABLE_BLOCK_TYPE *>(
-        buffer_pool_manager_->FetchPage(block_page_id));
 
+    Page *page = buffer_pool_manager_->FetchPage(block_page_id);
+    HASH_TABLE_BLOCK_TYPE *block_page = reinterpret_cast<HASH_TABLE_BLOCK_TYPE *>(page);
+
+    auto slot_id  = global_bucket_idx % BLOCK_ARRAY_SIZE;
+
+    page->RLatch();
     if (!block_page->IsOccupied(slot_id))
     {
+      buffer_pool_manager_->UnpinPage(block_page_id, false);
+      page->RUnlatch();
       return (result->size() > 0);
     }
 
@@ -84,6 +105,8 @@ bool HASH_TABLE_TYPE::GetValue(
       result->push_back(block_page->ValueAt(slot_id));
     }
     global_bucket_idx = (global_bucket_idx + 1) % num_buckets_;
+    buffer_pool_manager_->UnpinPage(block_page_id, false);
+    page->RUnlatch();
   }
 
   return (result->size() > 0);
@@ -101,25 +124,34 @@ bool HASH_TABLE_TYPE::Insert(
   for (size_t i = 0; i < num_buckets_; i++)
   {
     size_t block_id = global_bucket_idx / BLOCK_ARRAY_SIZE;
-    slot_offset_t slot_id = global_bucket_idx % BLOCK_ARRAY_SIZE;
-
     page_id_t block_page_id = header_page_->GetBlockPageId(block_id);
-    HASH_TABLE_BLOCK_TYPE *block_page = reinterpret_cast<HASH_TABLE_BLOCK_TYPE *>(
-        buffer_pool_manager_->FetchPage(block_page_id));
-    
+
+    Page *page = buffer_pool_manager_->FetchPage(block_page_id);
+    HASH_TABLE_BLOCK_TYPE *block_page = reinterpret_cast<HASH_TABLE_BLOCK_TYPE *>(page);
+
+    slot_offset_t slot_id = global_bucket_idx % BLOCK_ARRAY_SIZE;    
+
+    page->WLatch();
     if (block_page->IsReadable(slot_id) 
         && comparator_(key, block_page->KeyAt(slot_id)) == 0
         && value == block_page->ValueAt(slot_id)) 
     {
+      buffer_pool_manager_->UnpinPage(block_page_id, false);
+      page->WUnlatch();      
       return false;
     }
 
     if (block_page->Insert(slot_id, key,value))
     {
       sz_++;
+      buffer_pool_manager_->UnpinPage(block_page_id, true);
+      page->WUnlatch();
       return true;
     }
-    global_bucket_idx = (global_bucket_idx + 1) % num_buckets_;
+
+    global_bucket_idx = (global_bucket_idx + 1) % num_buckets_;    
+    buffer_pool_manager_->UnpinPage(block_page_id, false);
+    page->WUnlatch();
   }
   return false;
 }
@@ -143,13 +175,17 @@ bool HASH_TABLE_TYPE::Remove(
   for (size_t i = 0; i < num_buckets_; i++)
   {
     auto block_id = global_bucket_idx / BLOCK_ARRAY_SIZE;
-    auto slot_id  = global_bucket_idx % BLOCK_ARRAY_SIZE;
     page_id_t block_page_id = header_page_->GetBlockPageId(block_id);
-    HASH_TABLE_BLOCK_TYPE *block_page = reinterpret_cast<HASH_TABLE_BLOCK_TYPE *>(
-        buffer_pool_manager_->FetchPage(block_page_id));
+    Page *page = buffer_pool_manager_->FetchPage(block_page_id);
 
+    HASH_TABLE_BLOCK_TYPE *block_page = reinterpret_cast<HASH_TABLE_BLOCK_TYPE *>(page);
+    auto slot_id  = global_bucket_idx % BLOCK_ARRAY_SIZE;
+    
+    page->WLatch();
     if (!block_page->IsOccupied(slot_id))
     {
+      buffer_pool_manager_->UnpinPage(block_page_id, false);
+      page->WUnlatch();
       return false;
     }
 
@@ -159,9 +195,13 @@ bool HASH_TABLE_TYPE::Remove(
     {
       block_page->Remove(slot_id);
       sz_--;
+      buffer_pool_manager_->UnpinPage(block_page_id, true);
+      page->WUnlatch();      
       return true;
     }
 
+    buffer_pool_manager_->UnpinPage(block_page_id, false);
+    page->WUnlatch();
     global_bucket_idx = (global_bucket_idx + 1) % num_buckets_;
   }
 
@@ -172,7 +212,10 @@ bool HASH_TABLE_TYPE::Remove(
  * RESIZE
  *****************************************************************************/
 template <typename KeyType, typename ValueType, typename KeyComparator>
-void HASH_TABLE_TYPE::Resize(size_t initial_size) {}
+void HASH_TABLE_TYPE::Resize(size_t initial_size) 
+{
+
+}
 
 /*****************************************************************************
  * GETSIZE
