@@ -97,7 +97,6 @@ class LinearProbeHashTable : public HashTable<KeyType, ValueType, KeyComparator>
    * @param hash_fn the hash function
    */
   explicit LinearProbeHashTable (
-      const std::string &name,
       BufferPoolManager *buffer_pool_manager,
       const KeyComparator &comparator,
       page_id_t header_page,
