@@ -42,13 +42,55 @@ Page *BufferPoolManager::FetchPageImpl(page_id_t page_id) {
   // 2.     If R is dirty, write it back to the disk.
   // 3.     Delete R from the page table and insert P.
   // 4.     Update P's metadata, read in the page content from disk, and then return a pointer to P.
-  return nullptr;
+  frame_id_t frame_id;
+  if (const auto it = page_table_.find(page_id); it != page_table_.end()) {
+    frame_id = it->second;
+    replacer_->Pin(frame_id);
+    pages_[frame_id].pin_count_++;
+    return &pages_[frame_id];
+  }
+  if (!free_list_.empty()) {
+    frame_id = free_list_.back();
+    free_list_.pop_back();
+  } else if (replacer_->Victim(&frame_id)) {
+    if (pages_[frame_id].IsDirty()) {
+      disk_manager_->WritePage(pages_[frame_id].GetPageId(), pages_[frame_id].GetData());
+    }
+    page_table_.erase(pages_[frame_id].GetPageId());
+  } else {
+    return nullptr;
+  }
+  pages_[frame_id].is_dirty_ = false;
+  pages_[frame_id].pin_count_ = 1;
+  disk_manager_->ReadPage(page_id, pages_[frame_id].GetData());
+  return &pages_[frame_id];
 }
 
-bool BufferPoolManager::UnpinPageImpl(page_id_t page_id, bool is_dirty) { return false; }
+bool BufferPoolManager::UnpinPageImpl(page_id_t page_id, bool is_dirty) {
+  if (const auto it = page_table_.find(page_id); it != page_table_.end()) {
+    const auto frame_id = it->second;
+    if (pages_[frame_id].GetPinCount() < 1) {
+      return false;
+    }
+    pages_[frame_id].pin_count_--;
+    if (pages_[frame_id].GetPinCount() == 0) {
+      replacer_->Unpin(frame_id);
+    }
+    return true;
+  }
+  return false;
+}
 
 bool BufferPoolManager::FlushPageImpl(page_id_t page_id) {
   // Make sure you call DiskManager::WritePage!
+  if (const auto it = page_table_.find(page_id); it != page_table_.end()) {
+    const auto frame_id = it->second;
+    if (pages_[frame_id].IsDirty()) {
+      disk_manager_->WritePage(page_id, pages_[frame_id].GetData());
+      pages_[frame_id].is_dirty_ = false;
+    }
+    return true;
+  }
   return false;
 }
 
@@ -58,7 +100,24 @@ Page *BufferPoolManager::NewPageImpl(page_id_t *page_id) {
   // 2.   Pick a victim page P from either the free list or the replacer. Always pick from the free list first.
   // 3.   Update P's metadata, zero out memory and add P to the page table.
   // 4.   Set the page ID output parameter. Return a pointer to P.
-  return nullptr;
+  frame_id_t frame_id;
+  if (!free_list_.empty()) {
+    frame_id = free_list_.back();
+    free_list_.pop_back();
+  } else if (replacer_->Victim(&frame_id)) {
+    page_table_.erase(pages_[frame_id].GetPageId());
+    if (pages_[frame_id].IsDirty()) {
+      disk_manager_->WritePage(pages_[frame_id].GetPageId(), pages_[frame_id].GetData());
+    }
+  } else {
+    return nullptr;
+  }
+  pages_[frame_id].is_dirty_ = true;
+  pages_[frame_id].pin_count_ = 1;
+  pages_[frame_id].ResetMemory();
+  *page_id = disk_manager_->AllocatePage();
+  page_table_[*page_id] = frame_id;
+  return &pages_[frame_id];
 }
 
 bool BufferPoolManager::DeletePageImpl(page_id_t page_id) {
@@ -67,11 +126,27 @@ bool BufferPoolManager::DeletePageImpl(page_id_t page_id) {
   // 1.   If P does not exist, return true.
   // 2.   If P exists, but has a non-zero pin-count, return false. Someone is using the page.
   // 3.   Otherwise, P can be deleted. Remove P from the page table, reset its metadata and return it to the free list.
-  return false;
+  if (const auto it = page_table_.find(page_id); it != page_table_.end()) {
+    const auto frame_id = it->second;
+    if (pages_[frame_id].GetPinCount()) {
+      return false;
+    }
+    disk_manager_->DeallocatePage(page_id);
+    pages_[frame_id].is_dirty_ = false;
+    page_table_.erase(it);
+    free_list_.emplace_back(frame_id);
+  }
+  return true;
 }
 
 void BufferPoolManager::FlushAllPagesImpl() {
-  // You can do it!
+  for (const auto& pair : page_table_) {
+    const auto frame_id = pair.second;
+    if (pages_[frame_id].IsDirty()) {
+      disk_manager_->WritePage(pair.first, pages_[frame_id].GetData());
+      pages_[frame_id].is_dirty_ = false;
+    }
+  }
 }
 
 }  // namespace bustub
