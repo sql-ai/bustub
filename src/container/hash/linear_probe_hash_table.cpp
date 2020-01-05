@@ -33,7 +33,7 @@ HASH_TABLE_TYPE::LinearProbeHashTable
 ) : buffer_pool_manager_(buffer_pool_manager),
     comparator_(comparator),
     sz_(0),
-    num_buckets_(num_buckets),    
+    num_buckets_(num_buckets),
     hash_fn_(std::move(hash_fn))
 {
   
@@ -43,7 +43,12 @@ HASH_TABLE_TYPE::LinearProbeHashTable
   page_id_t block_page_id;
   for (size_t i = 0; i < num_pages_; i++)
   {
-    buffer_pool_manager_->NewPage(&block_page_id);
+    Page *newBlockPage = buffer_pool_manager_->NewPage(&block_page_id);
+    if (newBlockPage == nullptr)
+    {
+      LOG_ERROR("Expected error. Buffer pool manager NOT able to allocate new page....");
+    }
+    buffer_pool_manager_->UnpinPage(block_page_id, /*dirty*/ true);
     header_page_->AddBlockPageId(block_page_id);
   }
 }
@@ -52,12 +57,14 @@ template <typename KeyType, typename ValueType, typename KeyComparator>
 HASH_TABLE_TYPE::LinearProbeHashTable
 (
     BufferPoolManager *buffer_pool_manager,
-    const KeyComparator &comparator,
+    const KeyComparator &comparator,    
+    size_t num_buckets,
     page_id_t header_page,
     HashFunction<KeyType> hash_fn
-) : header_page_id_(header_page),
-    buffer_pool_manager_(buffer_pool_manager),
+) : buffer_pool_manager_(buffer_pool_manager),    
     comparator_(comparator),
+    num_buckets_(num_buckets),
+    header_page_id_(header_page),    
     hash_fn_(std::move(hash_fn))
 {
   header_page_ = reinterpret_cast<HashTableHeaderPage *>(buffer_pool_manager_->FetchPage(header_page_id_)->GetData());

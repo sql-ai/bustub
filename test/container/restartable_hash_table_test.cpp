@@ -18,6 +18,8 @@
 #include "gtest/gtest.h"
 #include "murmur3/MurmurHash3.h"
 
+constexpr size_t NUM_BUCKETS = 1100;
+
 namespace bustub {
 
 // NOLINTNEXTLINE
@@ -26,11 +28,11 @@ TEST(HashTableTest, EvictionTest)
   auto *disk_manager = new DiskManager("EvictionTest.db");
   auto *bpm = new BufferPoolManager(2, disk_manager);
 
-  LinearProbeHashTable<int, int, IntComparator> ht("blah", bpm, IntComparator(), 1100, HashFunction<int>());  
+  LinearProbeHashTable<int, int, IntComparator> ht("blah", bpm, IntComparator(), NUM_BUCKETS, HashFunction<int>());  
   std::vector<int> keys;
 
   // insert a few values
-  for (int i = 0; i < 1100; i++) 
+  for (size_t i = 0; i < NUM_BUCKETS; i++) 
   {
     ht.Insert(nullptr, i, i);
     std::vector<int> res;
@@ -40,7 +42,7 @@ TEST(HashTableTest, EvictionTest)
   }
 
   // check if the inserted values are all there
-  for (int i = 0; i < 1100; i++) 
+  for (size_t i = 0; i < NUM_BUCKETS; i++) 
   {
     std::vector<int> res;
     ht.GetValue(nullptr, i, &res);
@@ -48,22 +50,23 @@ TEST(HashTableTest, EvictionTest)
     EXPECT_EQ(i, res[0]);
   }
   
+  bpm->FlushAllPages();  
   disk_manager->ShutDown();
   delete disk_manager;
   delete bpm;
 }
 
 // NOLINTNEXTLINE
-TEST(HashTableTest, DISABLED_RestartTest) 
+TEST(HashTableTest, RestartTest) 
 {
   auto *disk_manager = new DiskManager("EvictionTest.db");
-  auto *bpm = new BufferPoolManager(10, disk_manager);
+  auto *bpm = new BufferPoolManager(2, disk_manager);
   page_id_t head_page = 0;
-  LinearProbeHashTable<int, int, IntComparator> ht(bpm, IntComparator(), head_page, HashFunction<int>());  
+  LinearProbeHashTable<int, int, IntComparator> ht(bpm, IntComparator(), NUM_BUCKETS, head_page, HashFunction<int>());
   std::vector<int> keys;
 
   // check if hash-table is correct
-  for (int i = 0; i < 10000; i++) 
+  for (size_t i = 0; i < NUM_BUCKETS; i++) 
   {
     std::vector<int> res;
     ht.GetValue(nullptr, i, &res);

@@ -70,8 +70,6 @@ namespace bustub {
 template <typename KeyType, typename ValueType, typename KeyComparator>
 class LinearProbeHashTable : public HashTable<KeyType, ValueType, KeyComparator> {
  public:
-    // member variable
-    page_id_t header_page_id_;
 
   /**
    * Creates a new LinearProbeHashTable
@@ -99,10 +97,10 @@ class LinearProbeHashTable : public HashTable<KeyType, ValueType, KeyComparator>
   explicit LinearProbeHashTable (
       BufferPoolManager *buffer_pool_manager,
       const KeyComparator &comparator,
+      size_t num_buckets,
       page_id_t header_page,
       HashFunction<KeyType> hash_fn
   );
-
 
   /**
    * Inserts a key-value pair into the hash table.
@@ -151,7 +149,6 @@ class LinearProbeHashTable : public HashTable<KeyType, ValueType, KeyComparator>
   size_t GetSize();
 
  private:
-
   HashTableHeaderPage *header_page_;
   BufferPoolManager *buffer_pool_manager_;
   KeyComparator comparator_;
@@ -159,11 +156,14 @@ class LinearProbeHashTable : public HashTable<KeyType, ValueType, KeyComparator>
   // Number of key/value pairs.
   size_t sz_;
 
-  // Number of blocks
-  size_t num_pages_;
-
   // Capacity, number of buckets 
   size_t num_buckets_;
+
+  // member variable
+  page_id_t header_page_id_;
+
+  // Number of blocks
+  size_t num_pages_;
 
   // Readers includes inserts and removes, writer is only resize
   ReaderWriterLatch table_latch_;
