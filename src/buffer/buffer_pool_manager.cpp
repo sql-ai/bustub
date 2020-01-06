@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "buffer/buffer_pool_manager.h"
+#include "common/logger.h"
 
 #include <list>
 #include <unordered_map>
@@ -66,7 +67,7 @@ Page *BufferPoolManager::FetchPageImpl(page_id_t page_id) {
     }
   }
   // Insert P to page table
-  page_table_[fid] = page_id;
+  page_table_[page_id] = fid;
   replacer_->Pin(fid);
 
   // Update P's metadata, read in the page content from disk, and then return a pointer to P.
@@ -81,17 +82,19 @@ bool BufferPoolManager::UnpinPageImpl(page_id_t page_id, bool is_dirty) {
   std::lock_guard<std::mutex> lock(latch_);
 
   if (page_table_.count(page_id) == 0) {
+    LOG_DEBUG("Unpin page %d that is not in the buffer pool", page_id);
     return false;
   }
 
   frame_id_t fid = page_table_[page_id];
 
   if (pages_[fid].GetPinCount() <= 0) {
+    LOG_DEBUG("Unpin page %d that have pin count = %d", page_id, pages_[fid].pin_count_);
     return false;
   }
 
   pages_[fid].pin_count_--;
-  pages_[fid].is_dirty_ = is_dirty;
+  pages_[fid].is_dirty_ |= is_dirty;
 
   if (pages_[fid].pin_count_ == 0) {
     replacer_->Unpin(fid);

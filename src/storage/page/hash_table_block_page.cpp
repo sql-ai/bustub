@@ -12,6 +12,8 @@
 
 #include "storage/page/hash_table_block_page.h"
 #include "storage/index/generic_key.h"
+#include <thread>
+#include <chrono>
 
 namespace bustub {
 
@@ -33,10 +35,12 @@ bool HASH_TABLE_BLOCK_TYPE::Insert(slot_offset_t bucket_ind, const KeyType &key,
   if (occupied_[x] & (1 << y)) {
     return false;
   }
+  
+  std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  array_[bucket_ind] = MappingType(key, value);
 
   occupied_[x] |= 1 << y;
   readable_[x] |= 1 << y;
-  array_[bucket_ind] = MappingType(key, value);
   return true;
 }
 
