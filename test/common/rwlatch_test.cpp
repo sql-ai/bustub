@@ -22,14 +22,18 @@ class Counter {
  public:
   Counter() = default;
   void Add(int num) {
+    std::this_thread::sleep_for (std::chrono::milliseconds(std::rand() % 100));
     mutex.WLock();
     count_ += num;
+    std::this_thread::sleep_for (std::chrono::milliseconds(std::rand() % 200));
     mutex.WUnlock();
   }
   int Read() {
     int res;
+    std::this_thread::sleep_for (std::chrono::milliseconds(std::rand() % 100));
     mutex.RLock();
     res = count_;
+    std::this_thread::sleep_for (std::chrono::milliseconds(std::rand() % 200));
     mutex.RUnlock();
     return res;
   }

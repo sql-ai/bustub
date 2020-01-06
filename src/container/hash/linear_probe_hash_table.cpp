@@ -135,6 +135,10 @@ bool HASH_TABLE_TYPE::Insert(
     size_t block_id = global_bucket_idx / BLOCK_ARRAY_SIZE;
     page_id_t block_page_id = header_page_->GetBlockPageId(block_id);    
     Page *page = buffer_pool_manager_->FetchPage(block_page_id);
+    if (page == nullptr) {
+      LOG_ERROR("Cannot fetch page %d", block_page_id);
+      return false;
+    }
     HASH_TABLE_BLOCK_TYPE *block_page = reinterpret_cast<HASH_TABLE_BLOCK_TYPE *>(page);
     slot_offset_t slot_id = global_bucket_idx % BLOCK_ARRAY_SIZE;  
     page->WLatch();

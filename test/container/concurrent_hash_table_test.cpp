@@ -47,50 +47,44 @@ void InsertHelper(LinearProbeHashTable<int, int, IntComparator> &ht,
   for (size_t i = 0; i < keys.size(); i++)
   {
     int k = keys[i];
-    int v = k*(thread_itr+1);
-    ht.Insert(nullptr, k, v);
+    // int v =  k * (1 + (i % 2));
+    ht.Insert(nullptr, k, k);
   }
 }
 
 // NOLINTNEXTLINE
-TEST(ConcurrentHashTableTest, DISABLED_ConcurrentTest) 
+TEST(ConcurrentHashTableTest, ConcurrentTest) 
 {
-  auto *disk_manager = new DiskManager("test.db");
-  auto *bpm = new BufferPoolManager(30, disk_manager);
+  auto *disk_manager = new DiskManager("EvictionTest.db");
+  auto *bpm = new BufferPoolManager(4, disk_manager);
 
-  LinearProbeHashTable<int, int, IntComparator> ht("blah", bpm, IntComparator(), 10000, HashFunction<int>());  
+  LinearProbeHashTable<int, int, IntComparator> ht("blah", bpm, IntComparator(), 1100, HashFunction<int>());  
   std::vector<int> keys;
 
-  for (int i = 0; i < 111; i++)
+  // insert a few values
+  for (int i = 0; i < 1100; i++) 
   {
     keys.push_back(i);
   }
 
-  LaunchParallelTest(9, InsertHelper, std::ref(ht), keys);
+  LaunchParallelTest(3, InsertHelper, std::ref(ht), keys);
 
-  for (auto key: keys)
+  // check if the inserted values are all there
+  for (int i = 0; i < 1100; i++) 
   {
-    if (key > 0)
-    {
-      std::vector<int> res;
-      ht.GetValue(nullptr, key, &res);
-      std::string s;
-      for (auto x : res)
-      {
-        s = s + ", " + std::to_string(x);
-      }
-      EXPECT_EQ(9, res.size()) << "Failed key  " << key << ", values " << s << std::endl;;
-    }
+    std::vector<int> res;
+    ht.GetValue(nullptr, i, &res);
+    EXPECT_EQ(1, res.size()) << "Failed to keep " << i << std::endl;
+    EXPECT_EQ(i, res[0]);
   }
   
   disk_manager->ShutDown();
-  remove("test.db");
   delete disk_manager;
   delete bpm;
 }
 
 // NOLINTNEXTLINE
-TEST(ConcurrentHashTableTest, RestartableConcurrentTest) 
+TEST(ConcurrentHashTableTest, DISABLED_RestartableConcurrentTest) 
 {
   auto *disk_manager = new DiskManager("RestartableConcurrentTest.db");
   auto *bpm = new BufferPoolManager(10, disk_manager);
@@ -111,7 +105,7 @@ TEST(ConcurrentHashTableTest, RestartableConcurrentTest)
 
   auto *disk_manager2 = new DiskManager("RestartableConcurrentTest.db");
   auto *bpm2 = new BufferPoolManager(30, disk_manager2);
-  page_id_t header_page_id = ht.header_page_id_;
+  page_id_t header_page_id = 0;
   LinearProbeHashTable<int, int, IntComparator> ht2("blah2", bpm2, IntComparator(), header_page_id, HashFunction<int>());
 
   for (auto key: keys)
