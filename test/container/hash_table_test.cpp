@@ -225,9 +225,9 @@ TEST(HashTableTest, RestartTest) {
 
 TEST(HashTableTest, ConcurrentTest) { 
   auto *disk_manager = new DiskManager("test.db");
-  auto *bpm = new BufferPoolManager(9, disk_manager);
+  auto *bpm = new BufferPoolManager(3, disk_manager);
 
-  LinearProbeHashTable<int, int, IntComparator> ht("blah", bpm, IntComparator(), 10000, HashFunction<int>());
+  LinearProbeHashTable<int, int, IntComparator> ht("blah", bpm, IntComparator(), 500, HashFunction<int>());
 
   int scale_factor = 111;
   int num_threads = 5;

@@ -28,6 +28,7 @@ BufferPoolManager::BufferPoolManager(size_t pool_size, DiskManager *disk_manager
   for (size_t i = 0; i < pool_size_; ++i) {
     free_list_.emplace_back(static_cast<int>(i));
   }
+  rw_latch_.SetMaxReaders(pool_size);
 }
 
 BufferPoolManager::~BufferPoolManager() {
@@ -50,6 +51,7 @@ Page *BufferPoolManager::FetchPageImpl(page_id_t page_id) {
     return &pages_[fid];
   }
 
+  rw_latch_.RLock();
   // If P does not exist, find a replacement page (R) from either the free list or the replacer.
   if (!free_list_.empty()) {
     fid = free_list_.back();
@@ -80,6 +82,7 @@ Page *BufferPoolManager::FetchPageImpl(page_id_t page_id) {
 
 bool BufferPoolManager::UnpinPageImpl(page_id_t page_id, bool is_dirty) {
   std::lock_guard<std::mutex> lock(latch_);
+  
 
   if (page_table_.count(page_id) == 0) {
     LOG_DEBUG("Unpin page %d that is not in the buffer pool", page_id);

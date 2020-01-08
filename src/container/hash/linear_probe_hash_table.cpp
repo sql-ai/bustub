@@ -79,7 +79,7 @@ bool HASH_TABLE_TYPE::GetValue(Transaction *transaction, const KeyType &key, std
     size_t block_id = offset / BLOCK_ARRAY_SIZE;
     slot_offset_t bucket_ind = offset % BLOCK_ARRAY_SIZE;
     page_id_t current_page_id = header_page->GetBlockPageId(block_id);
-
+    
     Page* b_page = buffer_pool_manager_->FetchPage(current_page_id);
     HASH_TABLE_BLOCK_TYPE *block_page = reinterpret_cast<HASH_TABLE_BLOCK_TYPE *>(b_page);
     b_page->RLatch();
@@ -121,7 +121,7 @@ bool HASH_TABLE_TYPE::Insert(Transaction *transaction, const KeyType &key, const
     size_t block_id = offset / BLOCK_ARRAY_SIZE;
     slot_offset_t bucket_ind = offset % BLOCK_ARRAY_SIZE;
 
-    page_id_t current_page_id = header_page->GetBlockPageId(block_id);
+    page_id_t current_page_id = header_page->GetBlockPageId(block_id);    
     Page *page = buffer_pool_manager_->FetchPage(current_page_id);
     page->WLatch();
     HASH_TABLE_BLOCK_TYPE *block_page = reinterpret_cast<HASH_TABLE_BLOCK_TYPE *>(page->GetData());

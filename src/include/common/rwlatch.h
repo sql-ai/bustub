@@ -26,7 +26,7 @@ namespace bustub {
 class ReaderWriterLatch {
   using mutex_t = std::mutex;
   using cond_t = std::condition_variable;
-  static const uint32_t MAX_READERS = UINT_MAX;
+  
 
  public:
   ReaderWriterLatch() = default;
@@ -34,6 +34,11 @@ class ReaderWriterLatch {
 
   DISALLOW_COPY(ReaderWriterLatch);
 
+  void SetMaxReaders(uint32_t max_readers)
+  {
+    this->MAX_READERS_ = max_readers;
+  }
+  
   /**
    * Acquire a write latch.
    */
@@ -62,7 +67,7 @@ class ReaderWriterLatch {
    */
   void RLock() {
     std::unique_lock<mutex_t> latch(mutex_);
-    while (writer_entered_ || reader_count_ == MAX_READERS) {
+    while (writer_entered_ || reader_count_ == MAX_READERS_) {
       reader_.wait(latch);
     }
     reader_count_++;
@@ -79,7 +84,7 @@ class ReaderWriterLatch {
         writer_.notify_one();
       }
     } else {
-      if (reader_count_ == MAX_READERS - 1) {
+      if (reader_count_ == MAX_READERS_ - 1) {
         reader_.notify_one();
       }
     }
@@ -91,6 +96,7 @@ class ReaderWriterLatch {
   cond_t reader_;
   uint32_t reader_count_{0};
   bool writer_entered_{false};
+  uint32_t MAX_READERS_ {1000};
 };
 
 }  // namespace bustub

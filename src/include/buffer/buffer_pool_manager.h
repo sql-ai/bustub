@@ -46,6 +46,7 @@ class BufferPoolManager {
 
   /** Grading function. Do not modify! */
   Page *FetchPage(page_id_t page_id, bufferpool_callback_fn callback = nullptr) {
+
     GradingCallback(callback, CallbackType::BEFORE, page_id);
     auto *result = FetchPageImpl(page_id);
     GradingCallback(callback, CallbackType::AFTER, page_id);
@@ -168,5 +169,7 @@ class BufferPoolManager {
   std::list<frame_id_t> free_list_;
   /** This latch protects shared data structures. We recommend updating this comment to describe what it protects. */
   std::mutex latch_;
+
+  ReaderWriterLatch rw_latch_{};
 };
 }  // namespace bustub
