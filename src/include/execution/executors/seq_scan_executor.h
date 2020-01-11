@@ -31,16 +31,42 @@ class SeqScanExecutor : public AbstractExecutor {
    * @param exec_ctx the executor context
    * @param plan the sequential scan plan to be executed
    */
-  SeqScanExecutor(ExecutorContext *exec_ctx, const SeqScanPlanNode *plan) : AbstractExecutor(exec_ctx) {}
+  SeqScanExecutor(ExecutorContext *exec_ctx, const SeqScanPlanNode *plan) : AbstractExecutor(exec_ctx), plan_(plan) {
+    table_oid_t table_oid = plan_->GetTableOid();
+    SimpleCatalog *catalog = exec_ctx_->GetCatalog();
+    table_metadata_ = catalog->GetTable(table_oid);
 
-  void Init() override {}
+    it_ = TableIterator(table_metadata_->table_->Begin(exec_ctx->GetTransaction()));
+  }
 
-  bool Next(Tuple *tuple) override { return false; }
+  void Init() override {
+    table_oid_t table_oid = plan_->GetTableOid();
+    SimpleCatalog *catalog = exec_ctx_->GetCatalog();
+    table_metadata_ = catalog->GetTable(table_oid);
+  }
+
+  bool Next(Tuple *tuple) override {
+    if (it_ == table_metadata_->table_->End()) {
+      return false;
+    }
+    Tuple t = *it_;
+    it_++;
+    Value output = plan_->GetPredicate()->Evaluate(&t, &(table_metadata_->schema_));
+    if (output.GetAs<bool>()) {
+      *tuple = t;
+      return true;
+    }
+    else {
+      return Next(tuple);
+    }
+  }
 
   const Schema *GetOutputSchema() override { return plan_->OutputSchema(); }
 
  private:
   /** The sequential scan plan node to be executed. */
   const SeqScanPlanNode *plan_;
+  TableMetadata* table_metadata_;
+  TableIterator it_{nullptr, RID(INVALID_PAGE_ID, 0), nullptr};
 };
 }  // namespace bustub

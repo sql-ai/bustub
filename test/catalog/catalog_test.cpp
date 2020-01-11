@@ -22,7 +22,7 @@
 namespace bustub {
 
 // NOLINTNEXTLINE
-TEST(CatalogTest, DISABLED_CreateTableTest) {
+TEST(CatalogTest, CreateTableTest) {
   auto disk_manager = new DiskManager("catalog_test.db");
   auto bpm = new BufferPoolManager(32, disk_manager);
   auto catalog = new SimpleCatalog(bpm, nullptr, nullptr);
@@ -43,6 +43,7 @@ TEST(CatalogTest, DISABLED_CreateTableTest) {
   // Notice that this test case doesn't check anything! :(
   // It is up to you to extend it
 
+  delete table_metadata;
   delete catalog;
   delete bpm;
   delete disk_manager;
