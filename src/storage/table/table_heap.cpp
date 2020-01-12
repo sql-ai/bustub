@@ -24,9 +24,15 @@ TableHeap::TableHeap(BufferPoolManager *buffer_pool_manager, LockManager *lock_m
       log_manager_(log_manager),
       first_page_id_(first_page_id) {}
 
-TableHeap::TableHeap(BufferPoolManager *buffer_pool_manager, LockManager *lock_manager, LogManager *log_manager,
-                     Transaction *txn)
-    : buffer_pool_manager_(buffer_pool_manager), lock_manager_(lock_manager), log_manager_(log_manager) {
+TableHeap::TableHeap(
+    BufferPoolManager *buffer_pool_manager, 
+    LockManager *lock_manager, 
+    LogManager *log_manager,
+    Transaction *txn)
+    : buffer_pool_manager_(buffer_pool_manager), 
+    lock_manager_(lock_manager), 
+    log_manager_(log_manager) 
+{
   // Initialize the first table page.
   auto first_page = reinterpret_cast<TablePage *>(buffer_pool_manager_->NewPage(&first_page_id_));
   BUSTUB_ASSERT(first_page != nullptr, "Couldn't create a page for the table heap.");
@@ -36,8 +42,10 @@ TableHeap::TableHeap(BufferPoolManager *buffer_pool_manager, LockManager *lock_m
   buffer_pool_manager_->UnpinPage(first_page_id_, true);
 }
 
-bool TableHeap::InsertTuple(const Tuple &tuple, RID *rid, Transaction *txn) {
-  if (tuple.size_ + 32 > PAGE_SIZE) {  // larger than one page size
+bool TableHeap::InsertTuple(const Tuple &tuple, RID *rid, Transaction *txn) 
+{
+  if (tuple.size_ + 32 > PAGE_SIZE) 
+  {  // larger than one page size
     txn->SetState(TransactionState::ABORTED);
     return false;
   }

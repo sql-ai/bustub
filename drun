@@ -1,3 +1,2 @@
 #!/bin/bash -e
-# --mount source=vscode-server,target=/root
-docker run -m 4G --privileged=true -ti --name cmudb -v $(pwd):/bustub --mount source=vscode-server,target=/root $1 bash 
+docker run -m 4G --privileged=true -ti --name cmudb -v $(pwd):/bustub --mount source=vscode-server,target=/root $1 bash

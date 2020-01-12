@@ -22,8 +22,19 @@ using column_oid_t = uint32_t;
  * Metadata about a table.
  */
 struct TableMetadata {
-  TableMetadata(Schema schema, std::string name, std::unique_ptr<TableHeap> &&table, table_oid_t oid)
-      : schema_(std::move(schema)), name_(std::move(name)), table_(std::move(table)), oid_(oid) {}
+  TableMetadata(
+      Schema schema, 
+      std::string name, 
+      std::unique_ptr<TableHeap> &&table,
+      table_oid_t oid)
+      : schema_(std::move(schema)), 
+        name_(std::move(name)), 
+        table_(std::move(table)), 
+        oid_(oid) 
+  {
+
+  }
+
   Schema schema_;
   std::string name_;
   std::unique_ptr<TableHeap> table_;
@@ -42,8 +53,15 @@ class SimpleCatalog {
    * @param lock_manager the lock manager in use by the system
    * @param log_manager the log manager in use by the system
    */
-  SimpleCatalog(BufferPoolManager *bpm, LockManager *lock_manager, LogManager *log_manager)
-      : bpm_{bpm}, lock_manager_{lock_manager}, log_manager_{log_manager} {}
+  SimpleCatalog(BufferPoolManager *bpm, 
+                LockManager *lock_manager, 
+                LogManager *log_manager)
+      : bpm_{bpm}, 
+      lock_manager_{lock_manager}, 
+      log_manager_{log_manager} 
+  {
+
+  }
 
   /**
    * Create a new table and return its metadata.
@@ -52,26 +70,66 @@ class SimpleCatalog {
    * @param schema the schema of the new table
    * @return a pointer to the metadata of the new table
    */
-  TableMetadata *CreateTable(Transaction *txn, const std::string &table_name, const Schema &schema) {
+  TableMetadata *CreateTable(
+      Transaction *txn, 
+      const std::string &table_name, 
+      const Schema &schema) 
+  {
     BUSTUB_ASSERT(names_.count(table_name) == 0, "Table names should be unique!");
-    return nullptr;
+    std::unique_ptr<TableHeap> table_heap = std::make_unique<TableHeap>(
+      bpm_, 
+      lock_manager_, 
+      log_manager_, 
+      txn) ;
+
+    std::unique_ptr<TableMetadata> table_meta = std::make_unique<TableMetadata>(
+      schema, 
+      table_name,
+      std::move(table_heap),
+      next_table_oid_);      
+
+    tables_[next_table_oid_] = std::move(table_meta);
+    names_[table_name] = next_table_oid_++;
+    return tables_[next_table_oid_-1].get();
   }
 
   /** @return table metadata by name */
-  TableMetadata *GetTable(const std::string &table_name) { return nullptr; }
+  TableMetadata *GetTable(const std::string &table_name) 
+  { 
+    if (names_.find(table_name) == names_.end())
+    {
+      char err_msg[80];
+      std::sprintf(err_msg, "Table %s not found", table_name.c_str());
+      throw std::out_of_range(err_msg);
+    }
+
+    table_oid_t table_oid = names_[table_name];
+    return GetTable(table_oid); 
+  }
 
   /** @return table metadata by oid */
-  TableMetadata *GetTable(table_oid_t table_oid) { return nullptr; }
+  TableMetadata *GetTable(table_oid_t table_oid) 
+  { 
+    if (tables_.find(table_oid) == tables_.end())
+    {
+      char err_msg[80];
+      std::sprintf(err_msg, "Table %d not found", table_oid);
+      throw std::out_of_range(err_msg);
+    }    
+    return tables_[table_oid].get(); 
+  }
 
  private:
-  [[maybe_unused]] BufferPoolManager *bpm_;
-  [[maybe_unused]] LockManager *lock_manager_;
-  [[maybe_unused]] LogManager *log_manager_;
-
+  BufferPoolManager *bpm_;
+  LockManager *lock_manager_;
+  LogManager *log_manager_;
+  
   /** tables_ : table identifiers -> table metadata. Note that tables_ owns all table metadata. */
   std::unordered_map<table_oid_t, std::unique_ptr<TableMetadata>> tables_;
+
   /** names_ : table names -> table identifiers */
   std::unordered_map<std::string, table_oid_t> names_;
+
   /** The next table identifier to be used. */
   std::atomic<table_oid_t> next_table_oid_{0};
 };

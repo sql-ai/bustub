@@ -37,7 +37,9 @@ class TableHeap {
    * @param log_manager the log manager
    * @param first_page_id the id of the first page
    */
-  TableHeap(BufferPoolManager *buffer_pool_manager, LockManager *lock_manager, LogManager *log_manager,
+  TableHeap(BufferPoolManager *buffer_pool_manager, 
+            LockManager *lock_manager, 
+            LogManager *log_manager,
             page_id_t first_page_id);
 
   /**
@@ -47,7 +49,9 @@ class TableHeap {
    * @param log_manager the log manager
    * @param txn the creating transaction
    */
-  TableHeap(BufferPoolManager *buffer_pool_manager, LockManager *lock_manager, LogManager *log_manager,
+  TableHeap(BufferPoolManager *buffer_pool_manager, 
+            LockManager *lock_manager, 
+            LogManager *log_manager,
             Transaction *txn);
 
   /**
@@ -57,7 +61,9 @@ class TableHeap {
    * @param txn the transaction performing the insert
    * @return true iff the insert is successful
    */
-  bool InsertTuple(const Tuple &tuple, RID *rid, Transaction *txn);
+  bool InsertTuple(const Tuple &tuple, 
+                    RID *rid, 
+                    Transaction *txn);
 
   /**
    * Mark the tuple as deleted. The actual delete will occur when ApplyDelete is called.

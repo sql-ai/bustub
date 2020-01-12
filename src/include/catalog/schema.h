@@ -29,17 +29,24 @@ class Schema {
    */
   explicit Schema(const std::vector<Column> &columns);
 
-  static Schema *CopySchema(const Schema *from, const std::vector<uint32_t> &attrs) {
+  static Schema *CopySchema(
+    const Schema *from, 
+    const std::vector<uint32_t> &attrs)
+  {
     std::vector<Column> cols;
     cols.reserve(attrs.size());
-    for (const auto i : attrs) {
+    for (const auto i : attrs) 
+    {
       cols.emplace_back(from->columns_[i]);
     }
     return new Schema{cols};
   }
 
   /** @return all the columns in the schema */
-  const std::vector<Column> &GetColumns() const { return columns_; }
+  const std::vector<Column> &GetColumns() const 
+  { 
+    return columns_; 
+  }
 
   /**
    * Returns a specific column from the schema.
@@ -59,9 +66,12 @@ class Schema {
    * @param col_name name of column to look for
    * @return the index of a column with the given name, throws an exception if it does not exist
    */
-  uint32_t GetColIdx(const std::string &col_name) const {
-    for (uint32_t i = 0; i < columns_.size(); ++i) {
-      if (columns_[i].GetName() == col_name) {
+  uint32_t GetColIdx(const std::string &col_name) const 
+  {
+    for (uint32_t i = 0; i < columns_.size(); ++i) 
+    {
+      if (columns_[i].GetName() == col_name) 
+      {
         return i;
       }
     }
@@ -69,7 +79,10 @@ class Schema {
   }
 
   /** @return the indices of non-inlined columns */
-  const std::vector<uint32_t> &GetUnlinedColumns() const { return uninlined_columns_; }
+  const std::vector<uint32_t> &GetUnlinedColumns() const 
+  { 
+    return uninlined_columns_; 
+  }
 
   /** @return the number of columns in the schema for the tuple */
   uint32_t GetColumnCount() const { return static_cast<uint32_t>(columns_.size()); }
@@ -101,3 +114,6 @@ class Schema {
 };
 
 }  // namespace bustub
+
+
+
