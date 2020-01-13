@@ -40,6 +40,7 @@ TEST(BufferPoolManagerTest, SampleTest) {
   // Scenario: We should be able to create new pages until we fill up the buffer pool.
   for (size_t i = 1; i < buffer_pool_size; ++i) {
     EXPECT_NE(nullptr, bpm->NewPage(&page_id_temp));
+    EXPECT_EQ(i, page_id_temp);
   }
 
   // Scenario: Once the buffer pool is full, we should not be able to create any new pages.
@@ -49,22 +50,32 @@ TEST(BufferPoolManagerTest, SampleTest) {
 
   // Scenario: After unpinning pages {0, 1, 2, 3, 4} and pinning another 4 new pages,
   // there would still be one buffer page left for reading page 0.
+  EXPECT_EQ(0, bpm->GetReplacerSize());
   for (int i = 0; i < 5; ++i) {
     EXPECT_EQ(true, bpm->UnpinPage(i, true));
+    EXPECT_EQ(i + 1, bpm->GetReplacerSize());
   }
   for (int i = 0; i < 4; ++i) {
     EXPECT_NE(nullptr, bpm->NewPage(&page_id_temp));
+    EXPECT_EQ(buffer_pool_size + i, page_id_temp);
+    EXPECT_EQ(5 - (i + 1), bpm->GetReplacerSize());
   }
 
   // Scenario: We should be able to fetch the data we wrote a while ago.
+  EXPECT_EQ(1, bpm->GetReplacerSize());
   page0 = bpm->FetchPage(0);
   EXPECT_EQ(0, strcmp(page0->GetData(), "Hello"));
+  EXPECT_EQ(0, bpm->GetReplacerSize());
 
   // Scenario: If we unpin page 0 and then make a new page, all the buffer pages should
   // now be pinned. Fetching page 0 should fail.
   EXPECT_EQ(true, bpm->UnpinPage(0, true));
+  EXPECT_EQ(1, bpm->GetReplacerSize());
   EXPECT_NE(nullptr, bpm->NewPage(&page_id_temp));
+  EXPECT_EQ(buffer_pool_size + 4, page_id_temp);
+  EXPECT_EQ(0, bpm->GetReplacerSize());
   EXPECT_EQ(nullptr, bpm->FetchPage(0));
+  EXPECT_EQ(0, bpm->GetReplacerSize());
 
   // Shutdown the disk manager and remove the temporary file we created.
   disk_manager->ShutDown();

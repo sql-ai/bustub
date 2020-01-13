@@ -60,8 +60,11 @@ Page *BufferPoolManager::FetchPageImpl(page_id_t page_id) {
   } else {
     return nullptr;
   }
+  page_table_[page_id] = frame_id;
   pages_[frame_id].is_dirty_ = false;
   pages_[frame_id].pin_count_ = 1;
+  pages_[frame_id].page_id_ = page_id;
+  replacer_->Pin(frame_id);
   disk_manager_->ReadPage(page_id, pages_[frame_id].GetData());
   return &pages_[frame_id];
 }
@@ -117,6 +120,8 @@ Page *BufferPoolManager::NewPageImpl(page_id_t *page_id) {
   pages_[frame_id].ResetMemory();
   *page_id = disk_manager_->AllocatePage();
   page_table_[*page_id] = frame_id;
+  pages_[frame_id].page_id_ = *page_id;
+  replacer_->Pin(frame_id);
   return &pages_[frame_id];
 }
 
@@ -133,6 +138,7 @@ bool BufferPoolManager::DeletePageImpl(page_id_t page_id) {
     }
     disk_manager_->DeallocatePage(page_id);
     pages_[frame_id].is_dirty_ = false;
+    pages_[frame_id].page_id_ = INVALID_PAGE_ID;
     page_table_.erase(it);
     free_list_.emplace_back(frame_id);
   }
@@ -140,10 +146,11 @@ bool BufferPoolManager::DeletePageImpl(page_id_t page_id) {
 }
 
 void BufferPoolManager::FlushAllPagesImpl() {
-  for (const auto& pair : page_table_) {
-    const auto frame_id = pair.second;
+  for (const auto& page_frame : page_table_) {
+    const auto page_id = page_frame.first;
+    const auto frame_id = page_frame.second;
     if (pages_[frame_id].IsDirty()) {
-      disk_manager_->WritePage(pair.first, pages_[frame_id].GetData());
+      disk_manager_->WritePage(page_id, pages_[frame_id].GetData());
       pages_[frame_id].is_dirty_ = false;
     }
   }

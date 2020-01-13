@@ -97,6 +97,9 @@ class BufferPoolManager {
   /** @return size of the buffer pool */
   size_t GetPoolSize() { return pool_size_; }
 
+  /** @return size of the replacer of the buffer pool */
+  auto GetReplacerSize() { return replacer_->Size(); }
+
  private:
   /**
    * Grading function. Do not modify!
