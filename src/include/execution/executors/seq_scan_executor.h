@@ -35,29 +35,28 @@ class SeqScanExecutor : public AbstractExecutor
   SeqScanExecutor(
     ExecutorContext *exec_ctx, 
     const SeqScanPlanNode *plan) : 
-    AbstractExecutor(exec_ctx), plan_(plan)
+    AbstractExecutor(exec_ctx), plan_(plan),
+    table_ptr_(exec_ctx_->GetCatalog()->GetTable(plan_->GetTableOid())->table_.get()),
+    schema_(&exec_ctx_->GetCatalog()->GetTable(plan_->GetTableOid())->schema_),
+    iter_(std::move(table_ptr_->Begin(exec_ctx_->GetTransaction())))
   {
-
   }
 
   void Init() override 
   {
-    table_ptr_ = exec_ctx_->GetCatalog()->GetTable(plan_->GetTableOid())->table_.get();
-    schema_ = &exec_ctx_->GetCatalog()->GetTable(plan_->GetTableOid())->schema_;
-    iter_ = &table_ptr_->Begin(exec_ctx_->GetTransaction());
   }
 
   bool Next(Tuple *tuple) override 
   { 
-    while (*iter_ != table_ptr_->End())
+    while (iter_ != table_ptr_->End())
     {      
-      *tuple = *(*iter_);
+      *tuple = *iter_;
       if (plan_->GetPredicate()->Evaluate(tuple,schema_).GetAs<bool>())
       {
-        ++(*iter_);
+        ++iter_;
         return true;
       }
-      ++(*iter_);
+      ++iter_;
     }
     return false; 
   }
@@ -72,6 +71,6 @@ class SeqScanExecutor : public AbstractExecutor
   const SeqScanPlanNode *plan_;
   TableHeap* table_ptr_;
   Schema* schema_;
-  TableIterator* iter_;
+  TableIterator iter_;
 };
 }  // namespace bustub

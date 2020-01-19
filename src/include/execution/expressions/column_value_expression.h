@@ -32,7 +32,7 @@ class ColumnValueExpression : public AbstractExpression
    * @param ret_type the return type of the expression
    */
   ColumnValueExpression(
-    int32_t tuple_idx, 
+    uint32_t tuple_idx,
     uint32_t col_idx, 
     TypeId ret_type) : 
       AbstractExpression({}, ret_type),
