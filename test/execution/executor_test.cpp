@@ -38,68 +38,107 @@ namespace bustub {
 class ExecutorTest : public ::testing::Test {
  public:
   // This function is called before every test.
-  void SetUp() override {
+  void SetUp() override 
+  {
     ::testing::Test::SetUp();
+    
     // For each test, we create a new DiskManager, BufferPoolManager, TransactionManager, and SimpleCatalog.
     disk_manager_ = std::make_unique<DiskManager>("executor_test.db");
     bpm_ = std::make_unique<BufferPoolManager>(32, disk_manager_.get());
-    txn_mgr_ = std::make_unique<TransactionManager>(lock_manager_.get(), log_manager_.get());
-    catalog_ = std::make_unique<SimpleCatalog>(bpm_.get(), lock_manager_.get(), log_manager_.get());
+    
+    txn_mgr_ = std::make_unique<TransactionManager>(
+      lock_manager_.get(), 
+      log_manager_.get());
+
+    catalog_ = std::make_unique<SimpleCatalog>(
+      bpm_.get(), 
+      lock_manager_.get(), 
+      log_manager_.get());
+
     // Begin a new transaction, along with its executor context.
     txn_ = txn_mgr_->Begin();
     exec_ctx_ = std::make_unique<ExecutorContext>(txn_, catalog_.get(), bpm_.get());
+
     // Generate some test tables.
     TableGenerator gen{exec_ctx_.get()};
     gen.GenerateTestTables();
   }
 
   // This function is called after every test.
-  void TearDown() override {
+  void TearDown() override 
+  {
     // Commit our transaction.
     txn_mgr_->Commit(txn_);
+  
     // Shut down the disk manager and clean up the transaction.
     disk_manager_->ShutDown();
+
     remove("executor_test.db");
     delete txn_;
   };
 
   /** @return the executor context in our test class */
-  ExecutorContext *GetExecutorContext() { return exec_ctx_.get(); }
+  ExecutorContext *GetExecutorContext() 
+  { 
+    return exec_ctx_.get(); 
+  }
 
   // The below helper functions are useful for testing.
 
-  const AbstractExpression *MakeColumnValueExpression(const Schema &schema, uint32_t tuple_idx,
-                                                      const std::string &col_name) {
+  const AbstractExpression *MakeColumnValueExpression(
+      const Schema &schema, 
+      uint32_t tuple_idx,
+      const std::string &col_name) 
+  {
     uint32_t col_idx = schema.GetColIdx(col_name);
     auto col_type = schema.GetColumn(col_idx).GetType();
-    allocated_exprs_.emplace_back(std::make_unique<ColumnValueExpression>(tuple_idx, col_idx, col_type));
+    allocated_exprs_.emplace_back
+    (
+      std::make_unique<ColumnValueExpression>(tuple_idx, col_idx, col_type)
+    );
     return allocated_exprs_.back().get();
   }
 
-  const AbstractExpression *MakeConstantValueExpression(const Value &val) {
+  const AbstractExpression *MakeConstantValueExpression(const Value &val) 
+  {
     allocated_exprs_.emplace_back(std::make_unique<ConstantValueExpression>(val));
     return allocated_exprs_.back().get();
   }
 
-  const AbstractExpression *MakeComparisonExpression(const AbstractExpression *lhs, const AbstractExpression *rhs,
-                                                     ComparisonType comp_type) {
+  const AbstractExpression *MakeComparisonExpression(
+    const AbstractExpression *lhs, 
+    const AbstractExpression *rhs,
+    ComparisonType comp_type) 
+  {
     allocated_exprs_.emplace_back(std::make_unique<ComparisonExpression>(lhs, rhs, comp_type));
     return allocated_exprs_.back().get();
   }
 
-  const AbstractExpression *MakeAggregateValueExpression(bool is_group_by_term, uint32_t term_idx) {
+  const AbstractExpression *MakeAggregateValueExpression(
+      bool is_group_by_term, 
+      uint32_t term_idx) 
+  {
     allocated_exprs_.emplace_back(
-        std::make_unique<AggregateValueExpression>(is_group_by_term, term_idx, TypeId::INTEGER));
+        std::make_unique<AggregateValueExpression>(
+          is_group_by_term, term_idx, TypeId::INTEGER));
     return allocated_exprs_.back().get();
   }
 
-  const Schema *MakeOutputSchema(const std::vector<std::pair<std::string, const AbstractExpression *>> &exprs) {
+  const Schema *MakeOutputSchema(
+    const std::vector<std::pair<std::string, 
+    const AbstractExpression *>> &exprs) 
+  {
     std::vector<Column> cols;
     cols.reserve(exprs.size());
-    for (const auto &input : exprs) {
-      if (input.second->GetReturnType() != TypeId::VARCHAR) {
+
+    for (const auto &input : exprs) 
+    {
+      if (input.second->GetReturnType() != TypeId::VARCHAR) 
+      {
         cols.emplace_back(input.first, input.second->GetReturnType(), input.second);
-      } else {
+      } 
+      else 
+      {
         cols.emplace_back(input.first, input.second->GetReturnType(), MAX_VARCHAR_SIZE, input.second);
       }
     }
@@ -115,6 +154,7 @@ class ExecutorTest : public ::testing::Test {
   std::unique_ptr<LockManager> lock_manager_ = nullptr;
   std::unique_ptr<BufferPoolManager> bpm_;
   std::unique_ptr<SimpleCatalog> catalog_;
+
   std::unique_ptr<ExecutorContext> exec_ctx_;
   std::vector<std::unique_ptr<AbstractExpression>> allocated_exprs_;
   std::vector<std::unique_ptr<Schema>> allocated_output_schemas_;
@@ -122,25 +162,34 @@ class ExecutorTest : public ::testing::Test {
 };
 
 // NOLINTNEXTLINE
-TEST_F(ExecutorTest, DISABLED_SimpleSeqScanTest) {
+TEST_F(ExecutorTest, SimpleSeqScanTest) 
+{
   // SELECT colA, colB FROM test_1 WHERE colA < 500
+
   TableMetadata *table_info = GetExecutorContext()->GetCatalog()->GetTable("test_1");
   Schema &schema = table_info->schema_;
+
   auto *colA = MakeColumnValueExpression(schema, 0, "colA");
   auto *colB = MakeColumnValueExpression(schema, 0, "colB");
   auto *const500 = MakeConstantValueExpression(ValueFactory::GetIntegerValue(500));
+
   auto *predicate = MakeComparisonExpression(colA, const500, ComparisonType::LessThan);
   auto *out_schema = MakeOutputSchema({{"colA", colA}, {"colB", colB}});
 
   SeqScanPlanNode plan{out_schema, predicate, table_info->oid_};
+
   auto executor = ExecutorFactory::CreateExecutor(GetExecutorContext(), &plan);
   executor->Init();
+
   Tuple tuple;
   uint32_t num_tuples = 0;
   std::cout << "ColA, ColB" << std::endl;
-  while (executor->Next(&tuple)) {
+
+  while (executor->Next(&tuple)) 
+  {
     ASSERT_TRUE(tuple.GetValue(out_schema, out_schema->GetColIdx("colA")).GetAs<int32_t>() < 500);
     ASSERT_TRUE(tuple.GetValue(out_schema, out_schema->GetColIdx("colB")).GetAs<int32_t>() < 10);
+    
     std::cout << tuple.GetValue(out_schema, out_schema->GetColIdx("colA")).GetAs<int32_t>() << ", "
               << tuple.GetValue(out_schema, out_schema->GetColIdx("colB")).GetAs<int32_t>() << std::endl;
     num_tuples++;

@@ -35,7 +35,8 @@ class TableGenerator {
    * Metadata about the data for a given column. Specifically, the type of the
    * column, the distribution of values, a min and max if appropriate.
    */
-  struct ColumnInsertMeta {
+  struct ColumnInsertMeta 
+  {
     /**
      * Name of the column
      */
@@ -68,23 +69,40 @@ class TableGenerator {
     /**
      * Constructor
      */
-    ColumnInsertMeta(const char *name, const TypeId type, bool nullable, Dist dist, uint64_t min, uint64_t max)
-        : name_(name), type_(type), nullable_(nullable), dist_(dist), min_(min), max_(max) {}
+    ColumnInsertMeta(
+      const char *name, 
+      const TypeId type, 
+      bool nullable, 
+      Dist dist, 
+      uint64_t min, 
+      uint64_t max) : 
+        name_(name), 
+        type_(type), 
+        nullable_(nullable), 
+        dist_(dist), 
+        min_(min), 
+        max_(max) 
+    {
+
+    }
   };
 
   /**
    * Metadata about a table. Specifically, the schema and number of
    * rows in the table.
    */
-  struct TableInsertMeta {
+  struct TableInsertMeta 
+  {
     /**
      * Name of the table
      */
     const char *name_;
+  
     /**
      * Number of rows
      */
     uint32_t num_rows_;
+  
     /**
      * Columns
      */
@@ -93,8 +111,16 @@ class TableGenerator {
     /**
      * Constructor
      */
-    TableInsertMeta(const char *name, uint32_t num_rows, std::vector<ColumnInsertMeta> col_meta)
-        : name_(name), num_rows_(num_rows), col_meta_(std::move(col_meta)) {}
+    TableInsertMeta(
+      const char *name, 
+      uint32_t num_rows, 
+      std::vector<ColumnInsertMeta> col_meta) : 
+        name_(name), 
+        num_rows_(num_rows), 
+        col_meta_(std::move(col_meta)) 
+    {
+
+    }
   };
 
   void FillTable(TableMetadata *info, TableInsertMeta *table_meta);

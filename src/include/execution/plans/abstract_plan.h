@@ -17,10 +17,17 @@
 
 #include "catalog/schema.h"
 
-namespace bustub {
+namespace bustub 
+{
 
 /** PlanType represents the types of plans that we have in our system. */
-enum class PlanType { SeqScan, HashJoin, Insert, Aggregation };
+enum class PlanType 
+{ 
+  SeqScan, 
+  HashJoin, 
+  Insert, 
+  Aggregation 
+};
 
 /**
  * AbstractPlanNode represents all the possible types of plan nodes in our system.
@@ -28,27 +35,43 @@ enum class PlanType { SeqScan, HashJoin, Insert, Aggregation };
  * Per the Volcano model, the plan node receives the tuples of its children.
  * The ordering of the children may matter.
  */
-class AbstractPlanNode {
+class AbstractPlanNode 
+{
  public:
   /**
    * Create a new AbstractPlanNode with the specified output schema and children.
    * @param output_schema the schema for the output of this plan node
    * @param children the children of this plan node
    */
-  AbstractPlanNode(const Schema *output_schema, std::vector<const AbstractPlanNode *> &&children)
-      : output_schema_(output_schema), children_(std::move(children)) {}
+  AbstractPlanNode(
+    const Schema *output_schema, 
+    std::vector<const AbstractPlanNode *> &&children)
+      : output_schema_(output_schema), 
+      children_(std::move(children)) 
+  {
+    
+  }
 
   /** Virtual destructor. */
   virtual ~AbstractPlanNode() = default;
 
   /** @return the schema for the output of this plan node */
-  const Schema *OutputSchema() const { return output_schema_; }
+  const Schema *OutputSchema() const 
+  { 
+    return output_schema_; 
+  }
 
   /** @return the child of this plan node at index child_idx */
-  const AbstractPlanNode *GetChildAt(uint32_t child_idx) const { return children_[child_idx]; }
+  const AbstractPlanNode *GetChildAt(uint32_t child_idx) const 
+  { 
+    return children_[child_idx]; 
+  }
 
   /** @return the children of this plan node */
-  const std::vector<const AbstractPlanNode *> &GetChildren() const { return children_; }
+  const std::vector<const AbstractPlanNode *> &GetChildren() const 
+  { 
+    return children_; 
+  }
 
   /** @return the type of this plan node */
   virtual PlanType GetType() const = 0;
@@ -59,6 +82,7 @@ class AbstractPlanNode {
    * and this tells you what schema this plan node's tuples will have.
    */
   const Schema *output_schema_;
+
   /** The children of this plan node. */
   std::vector<const AbstractPlanNode *> children_;
 };

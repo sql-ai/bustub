@@ -32,8 +32,16 @@ class ExecutorContext {
    * @param catalog the catalog that the executor should use
    * @param bpm the buffer pool manager that the executor should use
    */
-  ExecutorContext(Transaction *transaction, SimpleCatalog *catalog, BufferPoolManager *bpm)
-      : transaction_(transaction), catalog_{catalog}, bpm_{bpm} {}
+  ExecutorContext(
+    Transaction *transaction, 
+    SimpleCatalog *catalog, 
+    BufferPoolManager *bpm) : 
+    transaction_(transaction), 
+    catalog_{catalog}, 
+    bpm_{bpm} 
+  {
+
+  }
 
   DISALLOW_COPY_AND_MOVE(ExecutorContext);
 
@@ -60,4 +68,4 @@ class ExecutorContext {
   BufferPoolManager *bpm_;
 };
 
-}  // namespace bustub
+}  // namespace bustub    

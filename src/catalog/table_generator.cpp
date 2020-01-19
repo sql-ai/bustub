@@ -7,23 +7,31 @@
 namespace bustub {
 
 template <typename CppType>
-std::vector<Value> TableGenerator::GenNumericValues(ColumnInsertMeta *col_meta, uint32_t count) {
+std::vector<Value> TableGenerator::GenNumericValues(ColumnInsertMeta *col_meta, uint32_t count) 
+{
   std::vector<Value> values;
-  if (col_meta->dist_ == Dist::Serial) {
-    for (uint32_t i = 0; i < count; i++) {
+  if (col_meta->dist_ == Dist::Serial) 
+  {
+    for (uint32_t i = 0; i < count; i++) 
+    {
       values.emplace_back(Value(col_meta->type_, static_cast<CppType>(col_meta->serial_counter_)));
       col_meta->serial_counter_ += 1;
     }
     return values;
   }
+
   std::default_random_engine generator;
+  
   // TODO(Amadou): Break up in two branches if this is too weird.
   std::conditional_t<std::is_integral_v<CppType>, std::uniform_int_distribution<CppType>,
                      std::uniform_real_distribution<CppType>>
       distribution(static_cast<CppType>(col_meta->min_), static_cast<CppType>(col_meta->max_));
-  for (uint32_t i = 0; i < count; i++) {
+  
+  for (uint32_t i = 0; i < count; i++) 
+  {
     values.emplace_back(Value(col_meta->type_, distribution(generator)));
   }
+
   return values;
 }
 
@@ -45,21 +53,33 @@ std::vector<Value> TableGenerator::MakeValues(ColumnInsertMeta *col_meta, uint32
   }
 }
 
-void TableGenerator::FillTable(TableMetadata *info, TableInsertMeta *table_meta) {
+void TableGenerator::FillTable(
+  TableMetadata *info, 
+  TableInsertMeta *table_meta) 
+{
   uint32_t num_inserted = 0;
   uint32_t batch_size = 128;
-  while (num_inserted < table_meta->num_rows_) {
+
+  while (num_inserted < table_meta->num_rows_) 
+  {
     std::vector<std::vector<Value>> values;
+  
     uint32_t num_values = std::min(batch_size, table_meta->num_rows_ - num_inserted);
-    for (auto &col_meta : table_meta->col_meta_) {
+
+    for (auto &col_meta : table_meta->col_meta_) 
+    {
       values.emplace_back(MakeValues(&col_meta, num_values));
     }
-    for (uint32_t i = 0; i < num_values; i++) {
+
+    for (uint32_t i = 0; i < num_values; i++) 
+    {
       std::vector<Value> entry;
       entry.reserve(values.size());
-      for (const auto &col : values) {
+      for (const auto &col : values) 
+      {
         entry.emplace_back(col[i]);
       }
+
       RID rid;
       bool inserted = info->table_->InsertTuple(Tuple(entry, &info->schema_), &rid, exec_ctx_->GetTransaction());
       BUSTUB_ASSERT(inserted, "Sequential insertion cannot fail");
@@ -70,7 +90,8 @@ void TableGenerator::FillTable(TableMetadata *info, TableInsertMeta *table_meta)
   LOG_INFO("Wrote %d tuples to table %s.", num_inserted, table_meta->name_);
 }
 
-void TableGenerator::GenerateTestTables() {
+void TableGenerator::GenerateTestTables() 
+{
   /**
    * This array configures each of the test tables. Each able is configured
    * with a name, size, and schema. We also configure the columns of the table. If
@@ -107,14 +128,20 @@ void TableGenerator::GenerateTestTables() {
        {{"outA", TypeId::INTEGER, false, Dist::Serial, 0, 0}, {"outB", TypeId::INTEGER, false, Dist::Uniform, 0, 9}}},
   };
 
-  for (auto &table_meta : insert_meta) {
+  for (auto &table_meta : insert_meta) 
+  {
     // Create Schema
     std::vector<Column> cols{};
     cols.reserve(table_meta.col_meta_.size());
-    for (const auto &col_meta : table_meta.col_meta_) {
-      if (col_meta.type_ != TypeId::VARCHAR) {
+
+    for (const auto &col_meta : table_meta.col_meta_) 
+    {
+      if (col_meta.type_ != TypeId::VARCHAR) 
+      {
         cols.emplace_back(col_meta.name_, col_meta.type_);
-      } else {
+      } 
+      else 
+      {
         cols.emplace_back(col_meta.name_, col_meta.type_, TEST_VARLEN_SIZE);
       }
     }

@@ -19,13 +19,19 @@ namespace bustub {
 /**
  * AbstractExecutor implements the Volcano tuple-at-a-time iterator model.
  */
-class AbstractExecutor {
+class AbstractExecutor 
+{
  public:
   /**
    * Constructs a new AbstractExecutor.
    * @param exec_ctx the executor context that the executor runs with
    */
-  explicit AbstractExecutor(ExecutorContext *exec_ctx) : exec_ctx_{exec_ctx} {}
+  explicit AbstractExecutor(
+    ExecutorContext *exec_ctx) : 
+      exec_ctx_{exec_ctx} 
+  {
+
+  }
 
   /** Virtual destructor. */
   virtual ~AbstractExecutor() = default;
@@ -47,7 +53,10 @@ class AbstractExecutor {
   virtual const Schema *GetOutputSchema() = 0;
 
   /** @return the executor context in which this executor runs */
-  ExecutorContext *GetExecutorContext() { return exec_ctx_; }
+  ExecutorContext *GetExecutorContext() 
+  { 
+    return exec_ctx_; 
+  }
 
  protected:
   ExecutorContext *exec_ctx_;

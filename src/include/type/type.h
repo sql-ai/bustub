@@ -21,9 +21,15 @@ namespace bustub {
 
 class Value;
 
-enum class CmpBool { CmpFalse = 0, CmpTrue = 1, CmpNull = 2 };
+enum class CmpBool 
+{ 
+  CmpFalse = 0, 
+  CmpTrue = 1, 
+  CmpNull = 2 
+};
 
-class Type {
+class Type 
+{
  public:
   explicit Type(TypeId type_id) : type_id_(type_id) {}
 

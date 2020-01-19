@@ -39,7 +39,10 @@ class Tuple {
   Tuple() = default;
 
   // constructor for table heap tuple
-  explicit Tuple(RID rid) : rid_(rid) {}
+  explicit Tuple(RID rid) : rid_(rid) 
+  {
+    
+  }
 
   // constructor for creating a new tuple based on input value
   Tuple(std::vector<Value> values, const Schema *schema);

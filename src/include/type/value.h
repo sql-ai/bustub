@@ -72,7 +72,10 @@ class Value {
 
   Value(TypeId type, const std::string &data);
 
-  Value() : Value(TypeId::INVALID) {}
+  Value() : Value(TypeId::INVALID) 
+  {
+
+  }
 
   Value(const Value &other);
 
@@ -106,7 +109,10 @@ class Value {
     return Type::GetInstance(type_id_)->GetLength(*this); 
   }
   // Access the raw variable length data
-  inline const char *GetData() const { return Type::GetInstance(type_id_)->GetData(*this); }
+  inline const char *GetData() const 
+  { 
+    return Type::GetInstance(type_id_)->GetData(*this); 
+  }
 
   template <class T>
   inline T GetAs() const 
@@ -165,7 +171,12 @@ class Value {
   inline Value Multiply(const Value &o) const { return Type::GetInstance(type_id_)->Multiply(*this, o); }
   inline Value Divide(const Value &o) const { return Type::GetInstance(type_id_)->Divide(*this, o); }
   inline Value Modulo(const Value &o) const { return Type::GetInstance(type_id_)->Modulo(*this, o); }
-  inline Value Min(const Value &o) const { return Type::GetInstance(type_id_)->Min(*this, o); }
+
+  inline Value Min(const Value &o) const 
+  { 
+    return Type::GetInstance(type_id_)->Min(*this, o); 
+  }
+
   inline Value Max(const Value &o) const { return Type::GetInstance(type_id_)->Max(*this, o); }
   inline Value Sqrt() const { return Type::GetInstance(type_id_)->Sqrt(*this); }
 
@@ -214,7 +225,8 @@ class Value {
 
  protected:
   // The actual value item
-  union Val {
+  union Val 
+  {
     int8_t boolean_;
     int8_t tinyint_;
     int16_t smallint_;

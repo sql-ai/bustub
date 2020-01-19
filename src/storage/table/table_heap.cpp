@@ -17,8 +17,11 @@
 
 namespace bustub {
 
-TableHeap::TableHeap(BufferPoolManager *buffer_pool_manager, LockManager *lock_manager, LogManager *log_manager,
-                     page_id_t first_page_id)
+TableHeap::TableHeap(
+    BufferPoolManager *buffer_pool_manager, 
+    LockManager *lock_manager, 
+    LogManager *log_manager,
+    page_id_t first_page_id)
     : buffer_pool_manager_(buffer_pool_manager),
       lock_manager_(lock_manager),
       log_manager_(log_manager),
@@ -36,6 +39,7 @@ TableHeap::TableHeap(
   // Initialize the first table page.
   auto first_page = reinterpret_cast<TablePage *>(buffer_pool_manager_->NewPage(&first_page_id_));
   BUSTUB_ASSERT(first_page != nullptr, "Couldn't create a page for the table heap.");
+
   first_page->WLatch();
   first_page->Init(first_page_id_, PAGE_SIZE, INVALID_LSN, log_manager_, txn);
   first_page->WUnlatch();
@@ -59,7 +63,8 @@ bool TableHeap::InsertTuple(const Tuple &tuple, RID *rid, Transaction *txn)
   cur_page->WLatch();
   // Insert into the first page with enough space. If no such page exists, create a new page and insert into that.
   // INVARIANT: cur_page is WLatched if you leave the loop normally.
-  while (!cur_page->InsertTuple(tuple, rid, txn, lock_manager_, log_manager_)) {
+  while (!cur_page->InsertTuple(tuple, rid, txn, lock_manager_, log_manager_)) 
+  {
     auto next_page_id = cur_page->GetNextPageId();
     // If the next page is a valid page,
     if (next_page_id != INVALID_PAGE_ID) {
@@ -161,34 +166,45 @@ void TableHeap::RollbackDelete(const RID &rid, Transaction *txn) {
   buffer_pool_manager_->UnpinPage(page->GetTablePageId(), true);
 }
 
-bool TableHeap::GetTuple(const RID &rid, Tuple *tuple, Transaction *txn) {
+bool TableHeap::GetTuple(const RID &rid, Tuple *tuple, Transaction *txn) 
+{
   // Find the page which contains the tuple.
   auto page = static_cast<TablePage *>(buffer_pool_manager_->FetchPage(rid.GetPageId()));
+
   // If the page could not be found, then abort the transaction.
-  if (page == nullptr) {
+  if (page == nullptr) 
+  {
     txn->SetState(TransactionState::ABORTED);
     return false;
   }
+  
   // Read the tuple from the page.
   page->RLatch();
   bool res = page->GetTuple(rid, tuple, txn, lock_manager_);
+  
   page->RUnlatch();
   buffer_pool_manager_->UnpinPage(rid.GetPageId(), false);
   return res;
 }
 
-TableIterator TableHeap::Begin(Transaction *txn) {
+TableIterator TableHeap::Begin(Transaction *txn) 
+{
   // Start an iterator from the first page.
   auto page = static_cast<TablePage *>(buffer_pool_manager_->FetchPage(first_page_id_));
   page->RLatch();
   RID rid;
+
   // If this fails because there is no tuple, then RID will be the default-constructed value, which means EOF.
   page->GetFirstTupleRid(&rid);
+
   page->RUnlatch();
   buffer_pool_manager_->UnpinPage(first_page_id_, false);
   return TableIterator(this, rid, txn);
 }
 
-TableIterator TableHeap::End() { return TableIterator(this, RID(INVALID_PAGE_ID, 0), nullptr); }
+TableIterator TableHeap::End() 
+{ 
+  return TableIterator(this, RID(INVALID_PAGE_ID, 0), nullptr);
+}
 
 }  // namespace bustub

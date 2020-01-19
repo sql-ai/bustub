@@ -34,7 +34,8 @@ namespace bustub {
 
 class ValueFactory {
  public:
-  static inline Value Clone(const Value &src, __attribute__((__unused__)) AbstractPool *dataPool = nullptr) {
+  static inline Value Clone(const Value &src, __attribute__((__unused__)) AbstractPool *dataPool = nullptr) 
+  {
     return src.Copy();
   }
 
@@ -50,7 +51,8 @@ class ValueFactory {
 
   static inline Value GetDecimalValue(double value) { return Value(TypeId::DECIMAL, value); }
 
-  static inline Value GetBooleanValue(CmpBool value) {
+  static inline Value GetBooleanValue(CmpBool value) 
+  {
     return Value(TypeId::BOOLEAN, value == CmpBool::CmpNull ? BUSTUB_BOOLEAN_NULL : static_cast<int8_t>(value));
   }
 

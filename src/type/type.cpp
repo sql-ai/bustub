@@ -197,7 +197,8 @@ CmpBool Type::CompareGreaterThanEquals(const Value &left __attribute__((unused))
 }
 
 // Other mathematical functions
-Value Type::Add(const Value &left __attribute__((unused)), const Value &right __attribute__((unused))) const {
+Value Type::Add(const Value &left __attribute__((unused)), const Value &right __attribute__((unused))) const 
+{
   throw NotImplementedException("Add not implemented");
 }
 

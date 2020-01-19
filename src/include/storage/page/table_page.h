@@ -170,6 +170,13 @@ class TablePage : public Page {
   bool GetNextTupleRid(const RID &cur_rid, RID *next_rid);
 
  private:
+ /*  --------------------------------------------------------------------------------------------------
+ *  | PageId (4)| LSN (4)| PrevPageId (4)| NextPageId (4)| FreeSpacePointer(4) |
+ *  ---------------------------------------------------------------------------------------------------
+ *  --------------------------------------------------------------------------------------------------
+ *  | TupleCount(4) | Tuple_1 offset(4) | Tuple_1 size (4)| Tuple_2 offset(4) | Tuple_2 size(4) | ... |
+ *  -------------------------------------------------------------------------------------------------- */
+
   static_assert(sizeof(page_id_t) == 4);
 
   static constexpr size_t SIZE_TABLE_PAGE_HEADER = 24;
