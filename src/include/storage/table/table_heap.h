@@ -28,7 +28,10 @@ class TableHeap {
   friend class TableIterator;
 
  public:
-  ~TableHeap() = default;
+  ~TableHeap() 
+  {
+    delete End_;
+  }
 
   /**
    * Create a table heap without a transaction. (open table)
@@ -106,10 +109,14 @@ class TableHeap {
   bool GetTuple(const RID &rid, Tuple *tuple, Transaction *txn);
 
   /** @return the begin iterator of this table */
+  // std::unique_ptr<TableIterator> Begin(Transaction *txn);
   TableIterator Begin(Transaction *txn);
 
   /** @return the end iterator of this table */
-  TableIterator End();
+  TableIterator* End()
+  {
+      return End_;
+  }
 
   /** @return the id of the first page of this table */
   inline page_id_t GetFirstPageId() const { return first_page_id_; }
@@ -119,6 +126,7 @@ class TableHeap {
   LockManager *lock_manager_;
   LogManager *log_manager_;
   page_id_t first_page_id_{};
+  TableIterator* End_;
 };
 
 }  // namespace bustub

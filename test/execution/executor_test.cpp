@@ -35,8 +35,10 @@
 
 namespace bustub {
 
-class ExecutorTest : public ::testing::Test {
+class ExecutorTest : public ::testing::Test 
+{
  public:
+
   // This function is called before every test.
   void SetUp() override 
   {

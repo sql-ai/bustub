@@ -31,18 +31,26 @@ class TableIterator {
  public:
   TableIterator(TableHeap *table_heap, RID rid, Transaction *txn);
 
-  ~TableIterator() { delete tuple_; }
+  ~TableIterator() 
+  { 
+    std::cout << "TableIterator destroyed. Tutple RID = " << tuple_->rid_ << std::endl;
+    delete tuple_;
+  }
 
-  inline bool operator==(const TableIterator &itr) const { return tuple_->rid_.Get() == itr.tuple_->rid_.Get(); }
+  inline bool operator==(const TableIterator &itr) const 
+  { 
+    return tuple_->rid_.Get() == itr.tuple_->rid_.Get(); 
+  }
 
-  inline bool operator!=(const TableIterator &itr) const { return !(*this == itr); }
+  inline bool operator!=(const TableIterator &itr) const 
+  { 
+    return !(*this == itr); 
+  }
 
   const Tuple &operator*();
-
   Tuple *operator->();
 
   TableIterator &operator++();
-
   TableIterator operator++(int);
 
  private:

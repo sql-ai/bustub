@@ -25,7 +25,10 @@ TableHeap::TableHeap(
     : buffer_pool_manager_(buffer_pool_manager),
       lock_manager_(lock_manager),
       log_manager_(log_manager),
-      first_page_id_(first_page_id) {}
+      first_page_id_(first_page_id),
+      End_(new TableIterator(this, RID(INVALID_PAGE_ID, 0), nullptr))
+{
+}
 
 TableHeap::TableHeap(
     BufferPoolManager *buffer_pool_manager, 
@@ -34,7 +37,8 @@ TableHeap::TableHeap(
     Transaction *txn)
     : buffer_pool_manager_(buffer_pool_manager), 
     lock_manager_(lock_manager), 
-    log_manager_(log_manager) 
+    log_manager_(log_manager),
+    End_(new TableIterator(this, RID(INVALID_PAGE_ID, 0), nullptr)) 
 {
   // Initialize the first table page.
   auto first_page = reinterpret_cast<TablePage *>(buffer_pool_manager_->NewPage(&first_page_id_));
@@ -187,6 +191,7 @@ bool TableHeap::GetTuple(const RID &rid, Tuple *tuple, Transaction *txn)
   return res;
 }
 
+// std::unique_ptr<TableIterator> TableHeap::Begin(Transaction *txn) 
 TableIterator TableHeap::Begin(Transaction *txn) 
 {
   // Start an iterator from the first page.
@@ -200,11 +205,6 @@ TableIterator TableHeap::Begin(Transaction *txn)
   page->RUnlatch();
   buffer_pool_manager_->UnpinPage(first_page_id_, false);
   return TableIterator(this, rid, txn);
-}
-
-TableIterator TableHeap::End() 
-{ 
-  return TableIterator(this, RID(INVALID_PAGE_ID, 0), nullptr);
 }
 
 }  // namespace bustub

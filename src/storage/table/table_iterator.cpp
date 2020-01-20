@@ -24,21 +24,23 @@ TableIterator::TableIterator(
     tuple_(new Tuple(rid)), 
     txn_(txn) 
 {
+
   if (rid.GetPageId() != INVALID_PAGE_ID) 
   {
     table_heap_->GetTuple(tuple_->rid_, tuple_, txn_);
   }
+  std::cout << "TableIterator created. Tutple RID = " << tuple_->rid_ << std::endl;
 }
 
 const Tuple &TableIterator::operator*() 
 {
-  assert(*this != table_heap_->End());
+  // assert(*this != table_heap_->End());
   return *tuple_;
 }
 
 Tuple *TableIterator::operator->() 
 {
-  assert(*this != table_heap_->End());
+  // assert(*this != table_heap_->End());
   return tuple_;
 }
 
@@ -70,7 +72,7 @@ TableIterator &TableIterator::operator++()
   }
   tuple_->rid_ = next_tuple_rid;
 
-  if (*this != table_heap_->End()) 
+  if (*this != *table_heap_->End()) 
   {
     table_heap_->GetTuple(tuple_->rid_, tuple_, txn_);
   }

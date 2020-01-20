@@ -52,7 +52,7 @@ TEST(TupleTest, DISABLED_TableHeapTest) {
   }
 
   TableIterator itr = table->Begin(transaction);
-  while (itr != table->End()) {
+  while (itr != *table->End()) {
     // std::cout << itr->ToString(schema) << std::endl;
     ++itr;
   }

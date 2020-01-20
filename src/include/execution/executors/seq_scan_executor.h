@@ -38,25 +38,32 @@ class SeqScanExecutor : public AbstractExecutor
     AbstractExecutor(exec_ctx), plan_(plan),
     table_ptr_(exec_ctx_->GetCatalog()->GetTable(plan_->GetTableOid())->table_.get()),
     schema_(&exec_ctx_->GetCatalog()->GetTable(plan_->GetTableOid())->schema_),
-    iter_(std::move(table_ptr_->Begin(exec_ctx_->GetTransaction())))
+    End_(table_ptr_->End())
   {
+  }
+
+  ~SeqScanExecutor()
+  {
+    delete iter_;
   }
 
   void Init() override 
   {
+    // iter_ = (std::move(table_ptr_->Begin(exec_ctx_->GetTransaction()))),
+    iter_ = new TableIterator(table_ptr_->Begin(exec_ctx_->GetTransaction()));
   }
 
   bool Next(Tuple *tuple) override 
   { 
-    while (iter_ != table_ptr_->End())
+    while (*iter_ != *End_)
     {      
-      *tuple = *iter_;
+      *tuple = **iter_;
       if (plan_->GetPredicate()->Evaluate(tuple,schema_).GetAs<bool>())
       {
-        ++iter_;
+        ++*iter_;
         return true;
       }
-      ++iter_;
+      ++*iter_;
     }
     return false; 
   }
@@ -71,6 +78,7 @@ class SeqScanExecutor : public AbstractExecutor
   const SeqScanPlanNode *plan_;
   TableHeap* table_ptr_;
   Schema* schema_;
-  TableIterator iter_;
+  TableIterator* iter_;
+  TableIterator* End_;
 };
 }  // namespace bustub
