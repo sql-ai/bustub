@@ -22,7 +22,7 @@
 
 namespace bustub {
 /**
- * Store indexed key and and value together within block page. Supports
+ * Store indexed key and value together within block page. Supports
  * non-unique keys.
  *
  * Block page format (keys are stored in order):
@@ -73,7 +73,7 @@ class HashTableBlockPage {
   /**
    * Removes a key and value at index.
    *
-   * @param bucket_ind ind to remove the value
+   * @param bucket_ind index to remove the key and value pair
    */
   void Remove(slot_offset_t bucket_ind);
 
@@ -98,7 +98,7 @@ class HashTableBlockPage {
 
   // 0 if tombstone/brand new (never occupied), 1 otherwise.
   std::atomic_char readable_[(BLOCK_ARRAY_SIZE - 1) / 8 + 1];
-  MappingType array_[0];
+  MappingType array_[BLOCK_ARRAY_SIZE];
 };
 
 }  // namespace bustub

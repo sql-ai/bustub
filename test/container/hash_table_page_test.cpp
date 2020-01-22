@@ -23,9 +23,10 @@
 namespace bustub {
 
 // NOLINTNEXTLINE
-TEST(HashTablePageTest, DISABLED_HeaderPageSampleTest) {
+TEST(HashTablePageTest, HeaderPageSampleTest) {
   DiskManager *disk_manager = new DiskManager("test.db");
-  auto *bpm = new BufferPoolManager(5, disk_manager);
+  //auto *bpm = new BufferPoolManager(5, disk_manager);
+  auto bpm = new BufferPoolManager(5, disk_manager);
 
   // get a header page from the BufferPoolManager
   page_id_t header_page_id = INVALID_PAGE_ID;
@@ -61,15 +62,13 @@ TEST(HashTablePageTest, DISABLED_HeaderPageSampleTest) {
 }
 
 // NOLINTNEXTLINE
-TEST(HashTablePageTest, DISABLED_BlockPageSampleTest) {
+TEST(HashTablePageTest, BlockPageSampleTest) {
   DiskManager *disk_manager = new DiskManager("test.db");
-  auto *bpm = new BufferPoolManager(5, disk_manager);
+  auto bpm = new BufferPoolManager(5, disk_manager);
 
   // get a block page from the BufferPoolManager
   page_id_t block_page_id = INVALID_PAGE_ID;
-
-  auto block_page =
-      reinterpret_cast<HashTableBlockPage<int, int, IntComparator> *>(bpm->NewPage(&block_page_id, nullptr)->GetData());
+  auto block_page = reinterpret_cast<HashTableBlockPage<int, int, IntComparator> *>(bpm->NewPage(&block_page_id, nullptr));
 
   // insert a few (key, value) pairs
   for (unsigned i = 0; i < 10; i++) {
@@ -103,7 +102,7 @@ TEST(HashTablePageTest, DISABLED_BlockPageSampleTest) {
     }
   }
 
-  // unpin the header page now that we are done
+  // unpin the block page now that we are done
   bpm->UnpinPage(block_page_id, true, nullptr);
   disk_manager->ShutDown();
   remove("test.db");
