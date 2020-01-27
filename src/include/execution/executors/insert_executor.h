@@ -41,9 +41,8 @@ class InsertExecutor : public AbstractExecutor
     const InsertPlanNode *plan,
     std::unique_ptr<AbstractExecutor> &&child_executor
   )
-  : AbstractExecutor(exec_ctx) 
-  {
-    plan_ = plan;
+  : AbstractExecutor(exec_ctx), plan_(plan), child_executor_(move(child_executor))
+  {    
   }
 
   const Schema *GetOutputSchema() override 
@@ -55,16 +54,17 @@ class InsertExecutor : public AbstractExecutor
   {
     table_ptr_  = GetExecutorContext()->GetCatalog()->GetTable(plan_->TableOid())->table_.get();
     schema_     = &GetExecutorContext()->GetCatalog()->GetTable(plan_->TableOid())->schema_;
+    child_executor_->Init();
   }
 
   // Note that Insert does not make use of the tuple pointer being passed in.
   // We return false if the insert failed for any reason, and return true if all inserts succeeded.
   bool Next(Tuple *tuple) override 
   { 
+    RID rid;
     if (plan_->IsRawInsert())
     {
-      const std::vector<std::vector<Value>> &raw_vals = plan_->RawValues();
-      RID rid;
+      const std::vector<std::vector<Value>> &raw_vals = plan_->RawValues();    
       for (auto& row :   raw_vals)
       {        
         if (table_ptr_->InsertTuple(Tuple(row, schema_), &rid, exec_ctx_->GetTransaction()) == false)
@@ -72,6 +72,18 @@ class InsertExecutor : public AbstractExecutor
           return false;
         }
       }
+    } 
+    else 
+    {
+      // plan_->GetChildPlan();
+      Tuple tuple;
+      while (child_executor_->Next(&tuple))
+      {
+        if (table_ptr_->InsertTuple(tuple, &rid, exec_ctx_->GetTransaction()) == false)
+        {
+          return false;
+        }
+      }      
     }
     return true; 
   }
@@ -79,7 +91,8 @@ class InsertExecutor : public AbstractExecutor
  private:
   /** The insert plan node to be executed. */
   const InsertPlanNode *plan_;
+  std::unique_ptr<AbstractExecutor> child_executor_;
   TableHeap* table_ptr_;
-  Schema* schema_;  
+  Schema* schema_;    
 };
 }  // namespace bustub

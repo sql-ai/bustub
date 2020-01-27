@@ -60,7 +60,7 @@ class SeqScanExecutor : public AbstractExecutor
     while (*iter_ != *End_)
     {      
       *tuple = **iter_;
-      if (plan_->GetPredicate()->Evaluate(tuple,schema_).GetAs<bool>())
+      if (plan_->GetPredicate() == nullptr || plan_->GetPredicate()->Evaluate(tuple,schema_).GetAs<bool>())
       {
         ++*iter_;
         return true;
