@@ -21,12 +21,18 @@
 namespace bustub {
 
 // TODO(Amadou): It does not look like nulls are supported. Add a null bitmap?
-Tuple::Tuple(std::vector<Value> values, const Schema *schema) : allocated_(true) {
+Tuple::Tuple
+(
+  std::vector<Value> values, 
+  const Schema *schema
+) : allocated_(true) 
+{
   assert(values.size() == schema->GetColumnCount());
 
   // 1. Calculate the size of the tuple.
   uint32_t tuple_size = schema->GetLength();
-  for (auto &i : schema->GetUnlinedColumns()) {
+  for (auto &i : schema->GetUnlinedColumns()) 
+  {
     tuple_size += (values[i].GetLength() + sizeof(uint32_t));
   }
 
@@ -38,9 +44,11 @@ Tuple::Tuple(std::vector<Value> values, const Schema *schema) : allocated_(true)
   uint32_t column_count = schema->GetColumnCount();
   uint32_t offset = schema->GetLength();
 
-  for (uint32_t i = 0; i < column_count; i++) {
+  for (uint32_t i = 0; i < column_count; i++) 
+  {
     const auto &col = schema->GetColumn(i);
-    if (!col.IsInlined()) {
+    if (!col.IsInlined()) 
+    {
       // Serialize relative offset, where the actual varchar data is stored.
       *reinterpret_cast<uint32_t *>(data_ + col.GetOffset()) = offset;
       // Serialize varchar value, in place (size+data).

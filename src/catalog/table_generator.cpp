@@ -97,7 +97,8 @@ void TableGenerator::GenerateTestTables()
    * with a name, size, and schema. We also configure the columns of the table. If
    * you add a new table, set it up here.
    */
-  std::vector<TableInsertMeta> insert_meta{
+  std::vector<TableInsertMeta> insert_meta
+  {
       // The empty table
       {"empty_table", 0, {{"colA", TypeId::INTEGER, false, Dist::Serial, 0, 0}}},
 
@@ -110,22 +111,35 @@ void TableGenerator::GenerateTestTables()
         {"colD", TypeId::INTEGER, false, Dist::Uniform, 0, 99999}}},
 
       // Table 2
-      {"test_2",
-       TEST2_SIZE,
-       {{"col1", TypeId::SMALLINT, false, Dist::Serial, 0, 0},
-        {"col2", TypeId::INTEGER, true, Dist::Uniform, 0, 9},
-        {"col3", TypeId::BIGINT, false, Dist::Uniform, 0, 1024},
-        {"col4", TypeId::INTEGER, true, Dist::Uniform, 0, 2048}}},
+      {
+        "test_2",
+        TEST2_SIZE,
+        {
+          {"col1", TypeId::SMALLINT, false, Dist::Serial, 0, 0},
+          {"col2", TypeId::INTEGER, true, Dist::Uniform, 0, 9},
+          {"col3", TypeId::BIGINT, false, Dist::Uniform, 0, 1024},
+          {"col4", TypeId::INTEGER, true, Dist::Uniform, 0, 2048}}
+        },
 
       // Empty table with two columns
-      {"empty_table2",
-       0,
-       {{"colA", TypeId::INTEGER, false, Dist::Serial, 0, 0}, {"colB", TypeId::INTEGER, false, Dist::Uniform, 0, 9}}},
+      {
+        "empty_table2",
+        0,
+        {
+          {"colA", TypeId::INTEGER, false, Dist::Serial, 0, 0}, 
+          {"colB", TypeId::INTEGER, false, Dist::Uniform, 0, 9}
+        }
+      },
 
       // Empty table with two columns
-      {"empty_table3",
-       0,
-       {{"outA", TypeId::INTEGER, false, Dist::Serial, 0, 0}, {"outB", TypeId::INTEGER, false, Dist::Uniform, 0, 9}}},
+      {
+        "empty_table3",
+        0,
+        {
+          {"outA",  TypeId::INTEGER, false, Dist::Serial, 0, 0}, 
+          {"outB",  TypeId::INTEGER, false, Dist::Uniform, 0, 9}
+        }
+      },
   };
 
   for (auto &table_meta : insert_meta) 

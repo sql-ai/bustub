@@ -48,14 +48,18 @@ class ExecutorTest : public ::testing::Test
     disk_manager_ = std::make_unique<DiskManager>("executor_test.db");
     bpm_ = std::make_unique<BufferPoolManager>(32, disk_manager_.get());
     
-    txn_mgr_ = std::make_unique<TransactionManager>(
+    txn_mgr_ = std::make_unique<TransactionManager>
+    (
       lock_manager_.get(), 
-      log_manager_.get());
+      log_manager_.get()
+    );
 
-    catalog_ = std::make_unique<SimpleCatalog>(
+    catalog_ = std::make_unique<SimpleCatalog>
+    (
       bpm_.get(), 
       lock_manager_.get(), 
-      log_manager_.get());
+      log_manager_.get()
+    );
 
     // Begin a new transaction, along with its executor context.
     txn_ = txn_mgr_->Begin();
@@ -200,17 +204,24 @@ TEST_F(ExecutorTest, SimpleSeqScanTest)
 }
 
 // NOLINTNEXTLINE
-TEST_F(ExecutorTest, DISABLED_SimpleRawInsertTest) {
+TEST_F(ExecutorTest, SimpleRawInsertTest) 
+{
   // INSERT INTO empty_table2 VALUES (100, 10), (101, 11), (102, 12)
   // Create Values to insert
   std::vector<Value> val1{ValueFactory::GetIntegerValue(100), ValueFactory::GetIntegerValue(10)};
   std::vector<Value> val2{ValueFactory::GetIntegerValue(101), ValueFactory::GetIntegerValue(11)};
   std::vector<Value> val3{ValueFactory::GetIntegerValue(102), ValueFactory::GetIntegerValue(12)};
   std::vector<std::vector<Value>> raw_vals{val1, val2, val3};
+
   // Create insert plan node
   auto table_info = GetExecutorContext()->GetCatalog()->GetTable("empty_table2");
   InsertPlanNode insert_plan{std::move(raw_vals), table_info->oid_};
-  auto insert_executor = ExecutorFactory::CreateExecutor(GetExecutorContext(), &insert_plan);
+
+  auto insert_executor = ExecutorFactory::CreateExecutor
+  (
+    GetExecutorContext(), 
+    &insert_plan
+  );
   insert_executor->Init();
   ASSERT_TRUE(insert_executor->Next(nullptr));
 
@@ -220,29 +231,34 @@ TEST_F(ExecutorTest, DISABLED_SimpleRawInsertTest) {
   auto colA = MakeColumnValueExpression(schema, 0, "colA");
   auto colB = MakeColumnValueExpression(schema, 0, "colB");
   auto out_schema = MakeOutputSchema({{"colA", colA}, {"colB", colB}});
+
   SeqScanPlanNode scan_plan{out_schema, nullptr, table_info->oid_};
   auto scan_executor = ExecutorFactory::CreateExecutor(GetExecutorContext(), &scan_plan);
   scan_executor->Init();
   Tuple tuple;
   std::cout << "ColA, ColB" << std::endl;
+
   // First value
   ASSERT_TRUE(scan_executor->Next(&tuple));
   ASSERT_EQ(tuple.GetValue(out_schema, out_schema->GetColIdx("colA")).GetAs<int32_t>(), 100);
   ASSERT_EQ(tuple.GetValue(out_schema, out_schema->GetColIdx("colB")).GetAs<int32_t>(), 10);
   std::cout << tuple.GetValue(out_schema, out_schema->GetColIdx("colA")).GetAs<int32_t>() << ", "
             << tuple.GetValue(out_schema, out_schema->GetColIdx("colB")).GetAs<int32_t>() << std::endl;
+  
   // Second value
   ASSERT_TRUE(scan_executor->Next(&tuple));
   ASSERT_EQ(tuple.GetValue(out_schema, out_schema->GetColIdx("colA")).GetAs<int32_t>(), 101);
   ASSERT_EQ(tuple.GetValue(out_schema, out_schema->GetColIdx("colB")).GetAs<int32_t>(), 11);
   std::cout << tuple.GetValue(out_schema, out_schema->GetColIdx("colA")).GetAs<int32_t>() << ", "
             << tuple.GetValue(out_schema, out_schema->GetColIdx("colB")).GetAs<int32_t>() << std::endl;
+  
   // Third value
   ASSERT_TRUE(scan_executor->Next(&tuple));
   ASSERT_EQ(tuple.GetValue(out_schema, out_schema->GetColIdx("colA")).GetAs<int32_t>(), 102);
   ASSERT_EQ(tuple.GetValue(out_schema, out_schema->GetColIdx("colB")).GetAs<int32_t>(), 12);
   std::cout << tuple.GetValue(out_schema, out_schema->GetColIdx("colA")).GetAs<int32_t>() << ", "
             << tuple.GetValue(out_schema, out_schema->GetColIdx("colB")).GetAs<int32_t>() << std::endl;
+  
   // End
   ASSERT_FALSE(scan_executor->Next(&tuple));
 }

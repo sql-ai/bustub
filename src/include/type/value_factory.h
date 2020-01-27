@@ -43,7 +43,10 @@ class ValueFactory {
 
   static inline Value GetSmallIntValue(int16_t value) { return Value(TypeId::SMALLINT, value); }
 
-  static inline Value GetIntegerValue(int32_t value) { return Value(TypeId::INTEGER, value); }
+  static inline Value GetIntegerValue(int32_t value) 
+  { 
+    return Value(TypeId::INTEGER, value); 
+  }
 
   static inline Value GetBigIntValue(int64_t value) { return Value(TypeId::BIGINT, value); }
 

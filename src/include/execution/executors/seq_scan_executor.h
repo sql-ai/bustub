@@ -32,9 +32,11 @@ class SeqScanExecutor : public AbstractExecutor
    * @param exec_ctx the executor context
    * @param plan the sequential scan plan to be executed
    */
-  SeqScanExecutor(
+  SeqScanExecutor
+  (
     ExecutorContext *exec_ctx, 
-    const SeqScanPlanNode *plan) : 
+    const SeqScanPlanNode *plan
+  ) : 
     AbstractExecutor(exec_ctx), plan_(plan),
     table_ptr_(exec_ctx_->GetCatalog()->GetTable(plan_->GetTableOid())->table_.get()),
     schema_(&exec_ctx_->GetCatalog()->GetTable(plan_->GetTableOid())->schema_),
