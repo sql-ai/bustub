@@ -82,6 +82,9 @@ bool HASH_TABLE_TYPE::GetValue(Transaction *transaction, const KeyType &key, std
  *****************************************************************************/
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_TYPE::Insert(Transaction *transaction, const KeyType &key, const ValueType &value) {
+  if (size_ == num_buckets_) {
+    Resize(size_);
+  }
   auto h_page = buffer_pool_manager_->FetchPage(header_page_id_);
   HashTableHeaderPage *header_page = reinterpret_cast<HashTableHeaderPage *>(h_page);
   auto table_offset = hash_fn_.GetHash(key) % num_buckets_;
@@ -153,7 +156,36 @@ bool HASH_TABLE_TYPE::Remove(Transaction *transaction, const KeyType &key, const
  * RESIZE
  *****************************************************************************/
 template <typename KeyType, typename ValueType, typename KeyComparator>
-void HASH_TABLE_TYPE::Resize(size_t initial_size) {}
+void HASH_TABLE_TYPE::Resize(size_t initial_size) {
+  page_id_t new_header_page_id;
+  auto new_h_page = buffer_pool_manager_->NewPage(&new_header_page_id);
+  HashTableHeaderPage *new_header_page = reinterpret_cast<HashTableHeaderPage *>(new_h_page);
+  num_buckets_ = 2 * initial_size;
+  new_header_page->SetSize(num_buckets_);
+  auto new_num_blocks = (num_buckets_ - 1) / BLOCK_ARRAY_SIZE + 1;
+  page_id_t block_page_id;
+  for (size_t i = 0; i < new_num_blocks; i++) {
+    buffer_pool_manager_->NewPage(&block_page_id);
+    new_header_page->AddBlockPageId(block_page_id);
+  }
+  auto h_page = buffer_pool_manager_->FetchPage(header_page_id_);
+  HashTableHeaderPage *header_page = reinterpret_cast<HashTableHeaderPage *>(h_page);
+  size_ = 0;
+  auto num_blocks = header_page->NumBlocks();
+  for (size_t block_id = 0; block_id < num_blocks; block_id++) {
+    block_page_id = header_page->GetBlockPageId(block_id);
+    auto b_page = buffer_pool_manager_->FetchPage(block_page_id);
+    HASH_TABLE_BLOCK_TYPE *block_page = reinterpret_cast<HASH_TABLE_BLOCK_TYPE *>(b_page);
+    for (size_t bucket_ind_in_block = 0; bucket_ind_in_block < BLOCK_ARRAY_SIZE; bucket_ind_in_block++) {
+      if (block_page->IsReadable(bucket_ind_in_block)) {
+        Insert(nullptr, block_page->KeyAt(bucket_ind_in_block), block_page->ValueAt(bucket_ind_in_block));
+      }
+    }
+    buffer_pool_manager_->DeletePage(block_page_id);
+  }
+  buffer_pool_manager_->DeletePage(header_page_id_);
+  header_page_id_ = new_header_page_id;
+}
 
 /*****************************************************************************
  * GETSIZE

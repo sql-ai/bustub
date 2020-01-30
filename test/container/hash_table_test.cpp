@@ -25,7 +25,9 @@ TEST(HashTableTest, SampleTest) {
   auto *disk_manager = new DiskManager("test.db");
   auto *bpm = new BufferPoolManager(50, disk_manager);
 
-  LinearProbeHashTable<int, int, IntComparator> ht("blah", bpm, IntComparator(), 1000, HashFunction<int>());
+  // Also test 'Resize'
+  //LinearProbeHashTable<int, int, IntComparator> ht("blah", bpm, IntComparator(), 1000, HashFunction<int>());
+  LinearProbeHashTable<int, int, IntComparator> ht("blah", bpm, IntComparator(), 2, HashFunction<int>());
   EXPECT_EQ(0, ht.GetSize());
 
   // insert a few values
