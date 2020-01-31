@@ -157,34 +157,40 @@ bool HASH_TABLE_TYPE::Remove(Transaction *transaction, const KeyType &key, const
  *****************************************************************************/
 template <typename KeyType, typename ValueType, typename KeyComparator>
 void HASH_TABLE_TYPE::Resize(size_t initial_size) {
-  page_id_t new_header_page_id;
-  auto new_h_page = buffer_pool_manager_->NewPage(&new_header_page_id);
-  HashTableHeaderPage *new_header_page = reinterpret_cast<HashTableHeaderPage *>(new_h_page);
+  /* First save the Old header page id and grab the Old header page itself */
+  auto header_page_id_old = header_page_id_;
+  auto h_page_old = buffer_pool_manager_->FetchPage(header_page_id_old);
+  HashTableHeaderPage *header_page_old = reinterpret_cast<HashTableHeaderPage *>(h_page_old);
+  
+  // Set new hash table size
   num_buckets_ = 2 * initial_size;
-  new_header_page->SetSize(num_buckets_);
-  auto new_num_blocks = (num_buckets_ - 1) / BLOCK_ARRAY_SIZE + 1;
-  page_id_t block_page_id;
-  for (size_t i = 0; i < new_num_blocks; i++) {
-    buffer_pool_manager_->NewPage(&block_page_id);
-    new_header_page->AddBlockPageId(block_page_id);
+
+  /* Create New pages */
+  auto h_page_new = buffer_pool_manager_->NewPage(&header_page_id_);
+  HashTableHeaderPage *header_page_new = reinterpret_cast<HashTableHeaderPage *>(h_page_new);
+  header_page_new->SetSize(num_buckets_);
+  page_id_t block_page_id_new;
+  auto num_blocks_new = (num_buckets_ - 1) / BLOCK_ARRAY_SIZE + 1;
+  for (size_t i = 0; i < num_blocks_new; i++) {
+    buffer_pool_manager_->NewPage(&block_page_id_new);
+    header_page_new->AddBlockPageId(block_page_id_new);
   }
-  auto h_page = buffer_pool_manager_->FetchPage(header_page_id_);
-  HashTableHeaderPage *header_page = reinterpret_cast<HashTableHeaderPage *>(h_page);
+  
+  /* Copy data over from Old pages to New pages Then Delete Old pages */
   size_ = 0;
-  auto num_blocks = header_page->NumBlocks();
-  for (size_t block_id = 0; block_id < num_blocks; block_id++) {
-    block_page_id = header_page->GetBlockPageId(block_id);
-    auto b_page = buffer_pool_manager_->FetchPage(block_page_id);
-    HASH_TABLE_BLOCK_TYPE *block_page = reinterpret_cast<HASH_TABLE_BLOCK_TYPE *>(b_page);
-    for (size_t bucket_ind_in_block = 0; bucket_ind_in_block < BLOCK_ARRAY_SIZE; bucket_ind_in_block++) {
-      if (block_page->IsReadable(bucket_ind_in_block)) {
-        Insert(nullptr, block_page->KeyAt(bucket_ind_in_block), block_page->ValueAt(bucket_ind_in_block));
+  auto num_blocks_old = header_page_old->NumBlocks();
+  for (size_t block_id_old = 0; block_id_old < num_blocks_old; block_id_old++) {
+    auto block_page_id_old = header_page_old->GetBlockPageId(block_id_old);
+    auto b_page_old = buffer_pool_manager_->FetchPage(block_page_id_old);
+    HASH_TABLE_BLOCK_TYPE *block_page_old = reinterpret_cast<HASH_TABLE_BLOCK_TYPE *>(b_page_old);
+    for (slot_offset_t bucket_ind_in_block = 0; bucket_ind_in_block < BLOCK_ARRAY_SIZE; bucket_ind_in_block++) {
+      if (block_page_old->IsReadable(bucket_ind_in_block)) {
+        Insert(nullptr, block_page_old->KeyAt(bucket_ind_in_block), block_page_old->ValueAt(bucket_ind_in_block));
       }
     }
-    buffer_pool_manager_->DeletePage(block_page_id);
+    buffer_pool_manager_->DeletePage(block_page_id_old);
   }
-  buffer_pool_manager_->DeletePage(header_page_id_);
-  header_page_id_ = new_header_page_id;
+  buffer_pool_manager_->DeletePage(header_page_id_old);
 }
 
 /*****************************************************************************
