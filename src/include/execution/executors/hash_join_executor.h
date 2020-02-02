@@ -33,14 +33,18 @@ namespace bustub {
 /**
  * IdentityHashFunction hashes everything to itself, i.e. h(x) = x.
  */
-class IdentityHashFunction : public HashFunction<hash_t> {
+class IdentityHashFunction : public HashFunction<hash_t> 
+{
  public:
   /**
    * Hashes the key.
    * @param key the key to be hashed
    * @return the hashed value
    */
-  uint64_t GetHash(size_t key) override { return key; }
+  uint64_t GetHash(size_t key) override 
+  { 
+    return key; 
+  }
 };
 
 /**
@@ -67,7 +71,8 @@ class SimpleHashJoinHashTable
    * @param t the tuple to associate with the key
    * @return true if the insert succeeded
    */
-  bool Insert(Transaction *txn, hash_t h, const Tuple &t) {
+  bool Insert(Transaction *txn, hash_t h, const Tuple &t) 
+  {
     hash_table_[h].emplace_back(t);
     return true;
   }
@@ -78,7 +83,10 @@ class SimpleHashJoinHashTable
    * @param h the hash key
    * @param[out] t the list of tuples that matched the key
    */
-  void GetValue(Transaction *txn, hash_t h, std::vector<Tuple> *t) { *t = hash_table_[h]; }
+  void GetValue(Transaction *txn, hash_t h, std::vector<Tuple> *t) 
+  { 
+    *t = hash_table_[h]; 
+  }
 
  private:
   std::unordered_map<hash_t, std::vector<Tuple>> hash_table_;
@@ -94,7 +102,8 @@ using HT = SimpleHashJoinHashTable;
 /**
  * HashJoinExecutor executes hash join operations.
  */
-class HashJoinExecutor : public AbstractExecutor {
+class HashJoinExecutor : public AbstractExecutor 
+{
  public:
   /**
    * Creates a new hash join executor.
@@ -103,18 +112,36 @@ class HashJoinExecutor : public AbstractExecutor {
    * @param left the left child, used by convention to build the hash table
    * @param right the right child, used by convention to probe the hash table
    */
-  HashJoinExecutor(ExecutorContext *exec_ctx, const HashJoinPlanNode *plan, std::unique_ptr<AbstractExecutor> &&left,
-                   std::unique_ptr<AbstractExecutor> &&right)
-      : AbstractExecutor(exec_ctx) {}
+  HashJoinExecutor
+  (
+    ExecutorContext *exec_ctx, 
+    const HashJoinPlanNode *plan, 
+    std::unique_ptr<AbstractExecutor> &&left,
+    std::unique_ptr<AbstractExecutor> &&right
+  ) : AbstractExecutor(exec_ctx) 
+  {
+
+  }
 
   /** @return the JHT in use. Do not modify this function, otherwise you will get a zero. */
   // Uncomment me! const HT *GetJHT() const { return &jht_; }
 
-  const Schema *GetOutputSchema() override { return plan_->OutputSchema(); }
+  const HT *GetJHT() const 
+  { 
+    return &jht_; 
+  }
+  
+  const Schema *GetOutputSchema() override 
+  { 
+    return plan_->OutputSchema(); 
+  }
 
   void Init() override {}
 
-  bool Next(Tuple *tuple) override { return false; }
+  bool Next(Tuple *tuple) override 
+  { 
+    return false; 
+  }
 
   /**
    * Hashes a tuple by evaluating it against every expression on the given schema, combining all non-null hashes.
@@ -123,9 +150,13 @@ class HashJoinExecutor : public AbstractExecutor {
    * @param exprs expressions to evaluate the tuple with
    * @return the hashed tuple
    */
-  hash_t HashValues(const Tuple *tuple, const Schema *schema, const std::vector<const AbstractExpression *> &exprs) 
+  hash_t HashValues(
+    const Tuple *tuple, 
+    const Schema *schema, 
+    const std::vector<const AbstractExpression *> &exprs) 
   {
     hash_t curr_hash = 0;
+
     // For every expression,
     for (const auto &expr : exprs) 
     {
@@ -133,7 +164,8 @@ class HashJoinExecutor : public AbstractExecutor {
       Value val = expr->Evaluate(tuple, schema);
       
       // If this produces a value,
-      if (!val.IsNull()) {
+      if (!val.IsNull()) 
+      {
         // We combine the hash of that value into our current hash.
         curr_hash = HashUtil::CombineHashes(curr_hash, HashUtil::HashValue(&val));
       }
@@ -144,13 +176,17 @@ class HashJoinExecutor : public AbstractExecutor {
  private:
   /** The hash join plan node. */
   const HashJoinPlanNode *plan_;
+
   /** The comparator is used to compare hashes. */
   [[maybe_unused]] HashComparator jht_comp_{};
+  
   /** The identity hash function. */
   IdentityHashFunction jht_hash_fn_{};
 
   /** The hash table that we are using. */
   // Uncomment me! HT jht_;
+  HT jht_;
+
   /** The number of buckets in the hash table. */
   static constexpr uint32_t jht_num_buckets_ = 2;
 };
