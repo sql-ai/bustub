@@ -80,6 +80,7 @@ class Page {
 
   /** The actual data that is stored within a page. */
   char data_[PAGE_SIZE]{};
+  
   /** The ID of this page. */
   page_id_t page_id_ = INVALID_PAGE_ID;
   /** The pin count of this page. */
