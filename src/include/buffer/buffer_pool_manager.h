@@ -8,6 +8,29 @@
 //
 // Copyright (c) 2015-2019, Carnegie Mellon University Database Group
 //
+// BufferPoolManager is responsible for fetching database pages from the DiskManager
+// and storing them in memory. The BufferPoolManager can also write dirty pages out
+// to disk when it is either explicitly instructed to do so or when it needs to
+// evict a page to make space for a new page.
+
+// DiskManager contains the code that actually reads and writes data to disk.
+// All in-memory pages in the system are represented by Page objects.
+// Page objects are just containers for memory in the buffer pool and are not specific to a unique page.
+// Each Page object contains a block of memory that the DiskManager will use
+// as a location to copy the contents of a physical page that it reads from disk.
+// BufferPoolManager will reuse the same Page object to store data as it moves back and forth to disk.
+// The same Page object may contain a different physical page throughout its life.
+// The page_id keeps track of what page it contains;
+// if Page object doesn't have page, page_id = INVALID_PAGE_ID.
+
+// Each Page object also maintains a counter for the number of threads that have "pinned" that page.
+// BufferPoolManager is not allowed to free a Page that is pinned.
+// Each Page object also keeps track of whether it is dirty or not.
+// BufferPoolManager records whether a page was modified before it is unpinned.
+// BufferPoolManager must write the contents of a dirty Page back to disk before that object can be reused.
+
+// BufferPoolManager uses the ClockReplacer to keep track of when Page objects are
+// accessed so that it can decide which one to evict.
 //===----------------------------------------------------------------------===//
 
 #pragma once
@@ -16,6 +39,7 @@
 #include <mutex>  // NOLINT
 #include <unordered_map>
 
+#include "common/logger.h"
 #include "buffer/clock_replacer.h"
 #include "recovery/log_manager.h"
 #include "storage/disk/disk_manager.h"
@@ -115,6 +139,8 @@ class BufferPoolManager {
    * Fetch the requested page from the buffer pool.
    * @param page_id id of page to be fetched
    * @return the requested page
+   * return NULL if no page is available in the free list and
+   * all other pages are currently pinned.
    */
   Page *FetchPageImpl(page_id_t page_id);
 
@@ -130,6 +156,7 @@ class BufferPoolManager {
    * Flushes the target page to disk.
    * @param page_id id of page to be flushed, cannot be INVALID_PAGE_ID
    * @return false if the page could not be found in the page table, true otherwise
+   * FlushPageImpl should flush a page regardless of its pin status.
    */
   bool FlushPageImpl(page_id_t page_id);
 
