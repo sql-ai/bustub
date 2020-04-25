@@ -37,14 +37,52 @@ BufferPoolManager::~BufferPoolManager() {
 
 Page *BufferPoolManager::FetchPageImpl(page_id_t page_id) {
   // 1.     Search the page table for the requested page (P).
+  auto it = page_table_.find(page_id);
   // 1.1    If P exists, pin it and return it immediately.
+  if(it != page_table_.end())
+  {
+    Page &page = pages_[it->second];
+    pages_[it->second].pin_count_++;
+    replacer_->Pin(it->second);
+    return &page;
+  }
+
   // 1.2    If P does not exist, find a replacement page (R) from either the free list or the replacer.
   //        Note that pages are always found from the free list first.
-  // 2.     If R is dirty, write it back to the disk.
-  // 3.     Delete R from the page table and insert P.
+  frame_id_t frame_id;
+  if(free_list_.empty())
+  {
+    if(!replacer_->Victim(&frame_id))
+    {
+      return nullptr;
+    }
+
+    // 3.     Delete R from the page table and insert P.
+    page_id_t old_id = pages_[frame_id].GetPageId();
+    page_table_.erase(page_table_.find(old_id));
+
+    // 2.     If R is dirty, write it back to the disk.
+    if (pages_[frame_id].IsDirty()) {
+      disk_manager_->WritePage(old_id, pages_[frame_id].GetData());
+    }
+  }
+  else
+  {
+    frame_id = free_list_.back();
+    free_list_.pop_back();
+  }
+
   // 4.     Update P's metadata, read in the page content from disk, and then return a pointer to P.
-  
-  return nullptr;
+  replacer_->Pin(frame_id);
+  page_table_[page_id] = frame_id;
+
+  pages_[frame_id].ResetMemory();
+  disk_manager_->ReadPage(page_id, pages_[frame_id].data_);
+  pages_[frame_id].page_id_ = page_id;
+  pages_[frame_id].is_dirty_ = false;
+  pages_[frame_id].pin_count_ = 1;
+
+  return &pages_[frame_id];
 }
 
 bool BufferPoolManager::UnpinPageImpl(page_id_t page_id, bool is_dirty) 
@@ -62,7 +100,10 @@ bool BufferPoolManager::UnpinPageImpl(page_id_t page_id, bool is_dirty)
     return false;
   }
   page.pin_count_--;
-  if(page.pin_count_ == 0) replacer_->Unpin(page_table_[page_id]);
+  if(page.pin_count_ == 0)
+  {
+    replacer_->Unpin(page_table_[page_id]);
+  }
   page.is_dirty_ = is_dirty;
   return true;
 }
@@ -146,7 +187,7 @@ bool BufferPoolManager::DeletePageImpl(page_id_t page_id) {
   pages_[frame_id].is_dirty_ = false;
   pages_[frame_id].pin_count_ = 0;
   free_list_.push_back(frame_id);
-  return false;
+  return true;
 }
 
 void BufferPoolManager::FlushAllPagesImpl() {
