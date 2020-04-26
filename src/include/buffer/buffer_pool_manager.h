@@ -24,7 +24,27 @@
 namespace bustub {
 
 /**
- * BufferPoolManager reads disk pages to and from its internal buffer pool.
+ * The BufferPoolManager is responsiable for fetching database pages from the DiskManager and storing them in memory.
+ * The BufferPoolManager can also write dirty pages out to disk when it is either explicit instructed to do so or when
+ * it needs to evict a page to make space for a new page. 
+ *
+ * All in-memory pages in the system are represented by "Page" objects. "Page" objects are just containers for memory in
+ * the buffer pool and thus are not specific to a unique page. That is, each "Page" object contains a block of memory
+ * that the DiskManager will use as a location to copy the contents of a physical page that it reads from disk. The
+ * "BufferPoolManager" will reuse the same "Page" object to store data as it moves back and forth to disk. This means
+ * that the same "Page" object may contain a different physical page throughout the life of the system. The "Page"
+ * object's identifer ("page_id") keeps track of what physical page it contains; if a "Page" object does not contain a
+ * physical page, then its "page_id" must be set to "INVALID_PAGE_ID".
+ *
+ * Each "Page" object also maintains a counter for the number of threads that have pinned that page. The
+ * "BufferPoolManager" is not allowed to free a "Page" that is pinned. Each "Page" object also keeps track of whether it
+ * is dirty or not. The "BufferPoolManagger" must write the contents of a dirty Page back to disk before that object can
+ * be reused.
+ *
+ * The "BufferPoolManager" implementation will use the "ClockReplacer" class to keep track of when "Page" objects are
+ * accessed so that it can decide which one to evict when it must free a frame to make room for copying a new physical
+ * page from disk.
+ *
  */
 class BufferPoolManager {
  public:

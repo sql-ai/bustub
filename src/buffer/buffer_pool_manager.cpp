@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "buffer/buffer_pool_manager.h"
+#include "common/logger.h"
 
 #include <list>
 #include <unordered_map>
@@ -32,6 +33,7 @@ BufferPoolManager::BufferPoolManager(size_t pool_size, DiskManager *disk_manager
 BufferPoolManager::~BufferPoolManager() {
   delete[] pages_;
   delete replacer_;
+  free_list_.clear();
 }
 
 Page *BufferPoolManager::FetchPageImpl(page_id_t page_id) {
@@ -81,12 +83,14 @@ bool BufferPoolManager::UnpinPageImpl(page_id_t page_id, bool is_dirty) {
   std::lock_guard<std::mutex> lock(latch_);
 
   if (page_table_.count(page_id) == 0) {
+    LOG_ERROR("UnpinPage: Can't find page_id %d in the page table", page_id);
     return false;
   }
 
   frame_id_t fid = page_table_[page_id];
 
   if (pages_[fid].GetPinCount() <= 0) {
+    LOG_ERROR("UnpinPage: Page %d has a pin count = 0 already", page_id);
     return false;
   }
 
@@ -100,9 +104,14 @@ bool BufferPoolManager::UnpinPageImpl(page_id_t page_id, bool is_dirty) {
 }
 
 bool BufferPoolManager::FlushPageImpl(page_id_t page_id) {
+  if (page_id == INVALID_PAGE_ID) {
+    LOG_ERROR("FlushPage: page_id is invalid");
+    return false;
+  }
   std::lock_guard<std::mutex> lock(latch_);
 
   if (page_table_.count(page_id) == 0) {
+    LOG_ERROR("FlushPage: page_id %d is not in page table.", page_id);
     return false;
   }
 
@@ -117,7 +126,6 @@ bool BufferPoolManager::FlushPageImpl(page_id_t page_id) {
 Page *BufferPoolManager::NewPageImpl(page_id_t *page_id) {
   std::lock_guard<std::mutex> lock(latch_);
 
-  *page_id = disk_manager_->AllocatePage();
   frame_id_t fid;
 
   // Pick a victim page R from either the free list or the replacer. Always pick from the free list first.
@@ -138,6 +146,7 @@ Page *BufferPoolManager::NewPageImpl(page_id_t *page_id) {
     }
   }
 
+  *page_id = disk_manager_->AllocatePage();
   // Update P's metadata, zero out memory and add P to the page table.
   page_table_[*page_id] = fid;
   replacer_->Pin(fid);
