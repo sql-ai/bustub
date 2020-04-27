@@ -70,7 +70,7 @@ class LinearProbeHashTable : public HashTable<KeyType, ValueType, KeyComparator>
    * @param transaction the current transaction
    * @param key the key to look up
    * @param[out] result the value(s) associated with a given key
-   * @return the value(s) associated with the given key
+   * @return true if get value succeeded, false otherwise
    */
   bool GetValue(Transaction *transaction, const KeyType &key, std::vector<ValueType> *result) override;
 
@@ -97,6 +97,12 @@ class LinearProbeHashTable : public HashTable<KeyType, ValueType, KeyComparator>
 
   // Hash function
   HashFunction<KeyType> hash_fn_;
+
+  std::vector<ValueType> hashtable_;
+
+  size_t num_buckets_;
+  size_t num_blocks_;
+  size_t size_;
 };
 
 }  // namespace bustub
