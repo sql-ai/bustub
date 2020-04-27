@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "buffer/buffer_pool_manager.h"
+#include "common/logger.h"
 
 #include <list>
 #include <unordered_map>
@@ -162,6 +163,7 @@ Page *BufferPoolManager::NewPageImpl(page_id_t *page_id) {
   pages_[frame_id].is_dirty_ = false;
   pages_[frame_id].pin_count_ = 1;
   replacer_->Pin(frame_id);
+
 
   return &pages_[frame_id];
 }

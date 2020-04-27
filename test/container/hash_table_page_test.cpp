@@ -23,7 +23,7 @@
 namespace bustub {
 
 // NOLINTNEXTLINE
-TEST(HashTablePageTest, DISABLED_HeaderPageSampleTest) {
+TEST(HashTablePageTest, HeaderPageSampleTest) {
   DiskManager *disk_manager = new DiskManager("test.db");
   auto *bpm = new BufferPoolManager(5, disk_manager);
 
@@ -52,16 +52,22 @@ TEST(HashTablePageTest, DISABLED_HeaderPageSampleTest) {
     EXPECT_EQ(i, header_page->GetBlockPageId(i));
   }
 
+
   // unpin the header page now that we are done
   bpm->UnpinPage(header_page_id, true, nullptr);
+
   disk_manager->ShutDown();
+
   remove("test.db");
+
   delete disk_manager;
+
   delete bpm;
+
 }
 
 // NOLINTNEXTLINE
-TEST(HashTablePageTest, DISABLED_BlockPageSampleTest) {
+TEST(HashTablePageTest, BlockPageSampleTest) {
   DiskManager *disk_manager = new DiskManager("test.db");
   auto *bpm = new BufferPoolManager(5, disk_manager);
 
