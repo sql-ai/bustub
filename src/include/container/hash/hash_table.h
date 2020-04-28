@@ -8,6 +8,15 @@
 //
 // Copyright (c) 2015-2019, Carnegie Mellon University Database Group
 //
+// Hash table is meant to be accessed through the DBMS's BufferPoolManager. 
+// This means that everything must be stored in disk pages so that they can read/written from the DiskManager.
+//
+// If a hash tableis created, its pages are written to disk, and if the DBMS is restarted, the same hash table 
+// is loaded back from disk after restarting.
+//
+// To support reading/writing hash table blocks on top of pages, two Page classes are implemented to store the data of hash table. 
+// Hash table allocate memory from the BufferPoolManager as pages.
+// 
 //===----------------------------------------------------------------------===//
 
 #pragma once

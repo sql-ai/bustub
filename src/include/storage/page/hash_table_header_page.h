@@ -8,6 +8,8 @@
 //
 // Copyright (c) 2015-2019, Carnegie Mellon University Database Group
 //
+// Hold all of the meta-data for the hash table.
+// 
 //===----------------------------------------------------------------------===//
 
 #pragma once
@@ -90,11 +92,23 @@ class HashTableHeaderPage {
   size_t NumBlocks();
 
  private:
-  __attribute__((unused)) lsn_t lsn_;
-  __attribute__((unused)) size_t size_;
-  __attribute__((unused)) page_id_t page_id_;
-  __attribute__((unused)) size_t next_ind_;
-  __attribute__((unused)) page_id_t block_page_ids_[0];
+  // ================================================================================
+  // Variable Name	 | Size       | Description
+  // ================================================================================
+  // Page_id_        | 4 bytes    | Self Page Id
+  // size_           | 4 bytes    | Number of Key & Value pairs the hash table can hold
+  // next_ind_       | 4 bytes    | The next index to add a new entry to block_page_ids_
+  // lsn_            | 4 bytes    | Log sequence number (Used in Project 4)
+  // block_page_ids_ | 4080 bytes | Array of block page_id_t
+  // ================================================================================
+  //
+  // The block_page_ids_ array maps block ids to page_id_t ids. 
+  // The ith element in block_page_ids_ is the page_id for the ith block.
+  lsn_t lsn_;
+  size_t size_;
+  page_id_t page_id_;
+  size_t next_ind_;
+  page_id_t block_page_ids_[0];
 };
 
 }  // namespace bustub
