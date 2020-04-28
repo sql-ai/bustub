@@ -108,7 +108,7 @@ class HashTableHeaderPage {
   size_t size_;
   page_id_t page_id_;
   size_t next_ind_;
-  page_id_t block_page_ids_[0];
+  page_id_t block_page_ids_[(PAGE_SIZE-16)/sizeof(page_id_t)];
 };
 
 }  // namespace bustub
