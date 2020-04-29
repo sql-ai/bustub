@@ -32,6 +32,18 @@ namespace bustub {
  * Implementation of linear probing hash table that is backed by a buffer pool
  * manager. Non-unique keys are supported. Supports insert and delete. The
  * table dynamically grows once full.
+ * 
+ * KeyType: The type of each key in the hash table. 
+ * This will only be GenericKey, the actual size of GenericKey is specified and instantiated 
+ * with a template argument and depends on the data type of indexed attribute.
+ * 
+ * ValueType: The type of each value in the hash table. This will only be 64-bit RID.
+ * 
+ * KeyComparator: The class used to compare whether two KeyType instances are less/greater-than each other. 
+ * These will be included in the KeyType implementation files.
+ * 
+ * Use the == operator to compare whether two ValueType instances are equal.
+ * 
  */
 template <typename KeyType, typename ValueType, typename KeyComparator>
 class LinearProbeHashTable : public HashTable<KeyType, ValueType, KeyComparator> {
@@ -70,7 +82,7 @@ class LinearProbeHashTable : public HashTable<KeyType, ValueType, KeyComparator>
    * @param transaction the current transaction
    * @param key the key to look up
    * @param[out] result the value(s) associated with a given key
-   * @return the value(s) associated with the given key
+   * @return true if key is found, false otherwise
    */
   bool GetValue(Transaction *transaction, const KeyType &key, std::vector<ValueType> *result) override;
 
@@ -91,6 +103,10 @@ class LinearProbeHashTable : public HashTable<KeyType, ValueType, KeyComparator>
   page_id_t header_page_id_;
   BufferPoolManager *buffer_pool_manager_;
   KeyComparator comparator_;
+
+  size_t num_buckets_;
+  size_t num_blocks_;
+  size_t size_;
 
   // Readers includes inserts and removes, writer is only resize
   ReaderWriterLatch table_latch_;
