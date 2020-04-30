@@ -68,10 +68,10 @@ bool HASH_TABLE_TYPE::GetValue(
     size_t bucket_ind = offset % BLOCK_ARRAY_SIZE;
     
     page_id_t page_id = header_page->GetBlockPageId(block_id);
-    Page* b_page = buffer_pool_manager_->FetchPage(current_page_id);
+    Page* b_page = buffer_pool_manager_->FetchPage(page_id);
     HASH_TABLE_BLOCK_TYPE *block_page = reinterpret_cast<HASH_TABLE_BLOCK_TYPE *>(b_page);
 
-    if (block_page->IsReadable(bucket_ind) && comparator_(key, block_page->KeyAt(bucket_ind) == 0)) 
+    if (block_page->IsReadable(bucket_ind) && comparator_(key, block_page->KeyAt(bucket_ind)) == 0)
     {
       result->push_back(block_page->ValueAt(bucket_ind));
       isKeyFound = true;
@@ -94,6 +94,37 @@ bool HASH_TABLE_TYPE::GetValue(
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_TYPE::Insert(Transaction *transaction, const KeyType &key, const ValueType &value)
 {
+  size_t offset = hash_fn_.GetHash(key) % num_buckets_;
+  HashTableHeaderPage *header_page = reinterpret_cast<HashTableHeaderPage*>(buffer_pool_manager_->FetchPage(header_page_id_));
+  for (size_t i = 0; i < num_buckets_; i++)
+  {
+    size_t block_id = offset / BLOCK_ARRAY_SIZE;
+    size_t bucket_ind = offset % BLOCK_ARRAY_SIZE;
+    
+    page_id_t page_id = header_page->GetBlockPageId(block_id);
+    Page* b_page = buffer_pool_manager_->FetchPage(page_id);
+    HASH_TABLE_BLOCK_TYPE *block_page = reinterpret_cast<HASH_TABLE_BLOCK_TYPE *>(b_page);
+
+    if (block_page->IsReadable(bucket_ind) && 
+        comparator_(key, block_page->KeyAt(bucket_ind)) == 0 && value == block_page->ValueAt(bucket_ind)) 
+    {
+      buffer_pool_manager_->UnpinPage(page_id, false);
+      buffer_pool_manager_->UnpinPage(header_page_id_, false);
+      return false;
+    }
+    if (!block_page->IsOccupied(bucket_ind))
+    {
+      block_page->Insert(bucket_ind, key, value);
+      buffer_pool_manager_->UnpinPage(page_id, true);
+      size_++;
+      header_page->SetSize(size_);
+      buffer_pool_manager_->UnpinPage(header_page_id_, true);
+      return true;
+    }
+    buffer_pool_manager_->UnpinPage(page_id, false);
+    offset = (offset + 1) % num_buckets_;
+  }
+  buffer_pool_manager_->UnpinPage(header_page_id_, false);
   return false;
 }
 
@@ -101,7 +132,39 @@ bool HASH_TABLE_TYPE::Insert(Transaction *transaction, const KeyType &key, const
  * REMOVE
  *****************************************************************************/
 template <typename KeyType, typename ValueType, typename KeyComparator>
-bool HASH_TABLE_TYPE::Remove(Transaction *transaction, const KeyType &key, const ValueType &value) {
+bool HASH_TABLE_TYPE::Remove(Transaction *transaction, const KeyType &key, const ValueType &value) 
+{
+  size_t offset = hash_fn_.GetHash(key) % num_buckets_;
+  HashTableHeaderPage *header_page = reinterpret_cast<HashTableHeaderPage*>(buffer_pool_manager_->FetchPage(header_page_id_));
+  for (size_t i = 0; i < num_buckets_; i++)
+  {
+    size_t block_id = offset / BLOCK_ARRAY_SIZE;
+    size_t bucket_ind = offset % BLOCK_ARRAY_SIZE;
+    
+    page_id_t page_id = header_page->GetBlockPageId(block_id);
+    Page* b_page = buffer_pool_manager_->FetchPage(page_id);
+    HASH_TABLE_BLOCK_TYPE *block_page = reinterpret_cast<HASH_TABLE_BLOCK_TYPE *>(b_page);
+
+    if (block_page->IsReadable(bucket_ind) && 
+        comparator_(key, block_page->KeyAt(bucket_ind)) == 0 && value == block_page->ValueAt(bucket_ind)) 
+    {
+      block_page->Remove(bucket_ind);
+      buffer_pool_manager_->UnpinPage(page_id, true);
+      size_--;
+      header_page->SetSize(size_);
+      buffer_pool_manager_->UnpinPage(header_page_id_, true);
+      return true;
+    }
+    if (!block_page->IsOccupied(bucket_ind))
+    {
+      buffer_pool_manager_->UnpinPage(page_id, false);
+      buffer_pool_manager_->UnpinPage(header_page_id_, false);
+      return false;
+    }
+    buffer_pool_manager_->UnpinPage(page_id, false);
+    offset = (offset + 1) % num_buckets_;
+  }
+  buffer_pool_manager_->UnpinPage(header_page_id_, false);
   return false;
 }
 

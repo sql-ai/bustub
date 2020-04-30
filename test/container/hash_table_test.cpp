@@ -21,7 +21,7 @@
 namespace bustub {
 
 // NOLINTNEXTLINE
-TEST(HashTableTest, DISABLED_SampleTest) {
+TEST(HashTableTest, SampleTest) {
   auto *disk_manager = new DiskManager("test.db");
   auto *bpm = new BufferPoolManager(50, disk_manager);
 
@@ -90,7 +90,8 @@ TEST(HashTableTest, DISABLED_SampleTest) {
   }
 
   // delete all values
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < 5; i++) 
+  {
     if (i == 0) {
       // (0, 0) has been deleted
       EXPECT_FALSE(ht.Remove(nullptr, i, 2 * i));
