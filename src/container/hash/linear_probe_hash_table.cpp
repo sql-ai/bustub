@@ -33,12 +33,12 @@ HASH_TABLE_TYPE::LinearProbeHashTable(const std::string &name, BufferPoolManager
   header_page->SetSize(size_);
   header_page->SetPageId(header_page_id_);
 
-  num_blocks_ = (num_buckets) / BLOCK_ARRAY_SIZE + 1;
+  num_blocks_ = (num_buckets-1) / BLOCK_ARRAY_SIZE + 1;
   
   page_id_t block_page_id;
   for (size_t i = 0; i < num_blocks_; i++) {
     buffer_pool_manager_->NewPage(&block_page_id);
-    buffer_pool_manager_->UnpinPage(block_page_id, true);
+    buffer_pool_manager_->UnpinPage(block_page_id, false);
     header_page->AddBlockPageId(block_page_id);
   }
 
@@ -62,11 +62,8 @@ bool HASH_TABLE_TYPE::GetValue(Transaction *transaction, const KeyType &key, std
 
     if(!block_page->IsOccupied(bucket_idx))
     {
-      if(result->size() == 0) 
-      {
-        buffer_pool_manager_->UnpinPage(page->GetPageId(), false);
-        break;
-      }
+      buffer_pool_manager_->UnpinPage(page->GetPageId(), false);
+      break;
     }
 
     if(block_page->IsReadable(bucket_idx))
