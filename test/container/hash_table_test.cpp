@@ -28,7 +28,8 @@ TEST(HashTableTest, SampleTest) {
   LinearProbeHashTable<int, int, IntComparator> ht("blah", bpm, IntComparator(), 1000, HashFunction<int>());
 
   // insert a few values
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < 5; i++) 
+  {
     ht.Insert(nullptr, i, i);
     std::vector<int> res;
     ht.GetValue(nullptr, i, &res);
@@ -36,34 +37,49 @@ TEST(HashTableTest, SampleTest) {
     EXPECT_EQ(i, res[0]);
   }
 
+  ht.Resize(1000);
+
   // check if the inserted values are all there
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < 5; i++) 
+  {
     std::vector<int> res;
     ht.GetValue(nullptr, i, &res);
     EXPECT_EQ(1, res.size()) << "Failed to keep " << i << std::endl;
     EXPECT_EQ(i, res[0]);
   }
 
+
   // insert one more value for each key
-  for (int i = 0; i < 5; i++) {
-    if (i == 0) {
+  for (int i = 0; i < 5; i++) 
+  {
+    if (i == 0) 
+    {
       // duplicate values for the same key are not allowed
       EXPECT_FALSE(ht.Insert(nullptr, i, 2 * i));
-    } else {
+    } else 
+    {
       EXPECT_TRUE(ht.Insert(nullptr, i, 2 * i));
     }
+
     ht.Insert(nullptr, i, 2 * i);
     std::vector<int> res;
     ht.GetValue(nullptr, i, &res);
-    if (i == 0) {
+
+    if (i == 0) 
+    {
       // duplicate values for the same key are not allowed
       EXPECT_EQ(1, res.size());
       EXPECT_EQ(i, res[0]);
-    } else {
+    } 
+    else 
+    {
       EXPECT_EQ(2, res.size());
-      if (res[0] == i) {
+      if (res[0] == i) 
+      {
         EXPECT_EQ(2 * i, res[1]);
-      } else {
+      } 
+      else 
+      {
         EXPECT_EQ(2 * i, res[0]);
         EXPECT_EQ(i, res[1]);
       }
@@ -76,14 +92,19 @@ TEST(HashTableTest, SampleTest) {
   EXPECT_EQ(0, res.size());
 
   // delete some values
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < 5; i++) 
+  {
     EXPECT_TRUE(ht.Remove(nullptr, i, i));
+    
     std::vector<int> res;
     ht.GetValue(nullptr, i, &res);
-    if (i == 0) {
+    if (i == 0) 
+    {
       // (0, 0) is the only pair with key 0
       EXPECT_EQ(0, res.size());
-    } else {
+    } 
+    else 
+    {
       EXPECT_EQ(1, res.size());
       EXPECT_EQ(2 * i, res[0]);
     }
@@ -92,15 +113,18 @@ TEST(HashTableTest, SampleTest) {
   // delete all values
   for (int i = 0; i < 5; i++) 
   {
-    if (i == 0) {
+    if (i == 0) 
+    {
       // (0, 0) has been deleted
       EXPECT_FALSE(ht.Remove(nullptr, i, 2 * i));
     } else {
       EXPECT_TRUE(ht.Remove(nullptr, i, 2 * i));
     }
   }
+
   disk_manager->ShutDown();
   remove("test.db");
+  
   delete disk_manager;
   delete bpm;
 }

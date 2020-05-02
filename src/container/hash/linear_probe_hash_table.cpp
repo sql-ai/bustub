@@ -170,16 +170,64 @@ bool HASH_TABLE_TYPE::Remove(Transaction *transaction, const KeyType &key, const
 
 /*****************************************************************************
  * RESIZE
+ * The linear probing hashing scheme uses a fized-size table. 
+ * When the hash table is full, then any insert operation will get stuck in an infinite loop 
+ * because the system will walk through the entire slot array and not find a free space. 
+ * If hash table detects it is full, then it must resize itself to be twice the current size
+ * (i.e., if currently has n slots, then the new size will be 2×n).
+ * 
+ * Since any write operation could lead to a change of header_page_id in hash table, 
+ * update header_page_id in the header page (src/include/page/header_page.h) to ensure 
+ * that the container is durable on disk.
+ * 
  *****************************************************************************/
 template <typename KeyType, typename ValueType, typename KeyComparator>
-void HASH_TABLE_TYPE::Resize(size_t initial_size) {}
+void HASH_TABLE_TYPE::Resize(size_t initial_size) 
+{
+  page_id_t old_header_page_id = header_page_id_;
+  auto *old_header_page = reinterpret_cast<HashTableHeaderPage*>(buffer_pool_manager_->FetchPage(old_header_page_id));
+
+  num_buckets_ = initial_size * 2;
+  num_blocks_ = (num_buckets_ - 1) / BLOCK_ARRAY_SIZE + 1;
+
+  auto header_page = reinterpret_cast<HashTableHeaderPage *>(buffer_pool_manager_->NewPage(&header_page_id_));
+
+  page_id_t block_page_id;
+  for (size_t i = 0; i < num_blocks_; i++)
+  {
+    buffer_pool_manager_->NewPage(&block_page_id);
+    header_page->AddBlockPageId(block_page_id);    
+    buffer_pool_manager_->UnpinPage(block_page_id, true);
+  }
+  buffer_pool_manager_->UnpinPage(header_page_id_, true);
+
+  size_ = 0;
+  for (size_t block_id = 0; block_id < old_header_page->NumBlocks(); block_id++)
+  {
+    auto old_block_page_id = old_header_page->GetBlockPageId(block_id);
+    HASH_TABLE_BLOCK_TYPE *old_block_page = reinterpret_cast<HASH_TABLE_BLOCK_TYPE*>(
+      buffer_pool_manager_->FetchPage(old_block_page_id));
+    for (size_t bucket_id = 0; bucket_id < BUFFER_POOL_SIZE; bucket_id++)
+    {
+      if (old_block_page->IsReadable(bucket_id)) 
+      {
+        Insert(nullptr, old_block_page->KeyAt(bucket_id), old_block_page->ValueAt(bucket_id));
+      }      
+    }
+    buffer_pool_manager_->UnpinPage(old_block_page_id, false);
+    buffer_pool_manager_->DeletePage(old_block_page_id);
+  }
+  buffer_pool_manager_->UnpinPage(old_header_page_id, false);
+  buffer_pool_manager_->DeletePage(old_header_page_id);
+}
 
 /*****************************************************************************
  * GETSIZE
  *****************************************************************************/
 template <typename KeyType, typename ValueType, typename KeyComparator>
-size_t HASH_TABLE_TYPE::GetSize() {
-  return 0;
+size_t HASH_TABLE_TYPE::GetSize() 
+{
+  return size_;
 }
 
 template class LinearProbeHashTable<int, int, IntComparator>;
