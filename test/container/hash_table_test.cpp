@@ -44,10 +44,24 @@ TEST(HashTableTest, SampleTest) {
     EXPECT_EQ(i, res[0]);
   }
 
+  ht.Resize(10);
+
+  // check if the inserted values are all there
+  for (int i = 0; i < 5; i++) {
+    std::vector<int> res;
+    ht.GetValue(nullptr, i, &res);
+    EXPECT_EQ(1, res.size()) << "Failed to keep " << i << std::endl;
+    EXPECT_EQ(i, res[0]);
+  }
+
+
   // insert one more value for each key
   for (int i = 0; i < 5; i++) {
     if (i == 0) {
       // duplicate values for the same key are not allowed
+      std::vector<int> res;
+      ht.GetValue(nullptr, i, &res);
+      LOG_DEBUG("Result: %d", int(res.size()));
       EXPECT_FALSE(ht.Insert(nullptr, i, 2 * i));
     } else {
       EXPECT_TRUE(ht.Insert(nullptr, i, 2 * i));
