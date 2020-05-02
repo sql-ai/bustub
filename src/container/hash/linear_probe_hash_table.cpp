@@ -207,7 +207,7 @@ void HASH_TABLE_TYPE::Resize(size_t initial_size)
     auto old_block_page_id = old_header_page->GetBlockPageId(block_id);
     HASH_TABLE_BLOCK_TYPE *old_block_page = reinterpret_cast<HASH_TABLE_BLOCK_TYPE*>(
       buffer_pool_manager_->FetchPage(old_block_page_id));
-    for (size_t bucket_id = 0; bucket_id < BUFFER_POOL_SIZE; bucket_id++)
+    for (size_t bucket_id = 0; bucket_id < BLOCK_ARRAY_SIZE; bucket_id++)
     {
       if (old_block_page->IsReadable(bucket_id)) 
       {
