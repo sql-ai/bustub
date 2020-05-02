@@ -44,7 +44,7 @@ TEST(HashTableTest, SampleTest) {
     EXPECT_EQ(i, res[0]);
   }
 
-  ht.Resize(10);
+  ht.Resize(1000);
 
   // check if the inserted values are all there
   for (int i = 0; i < 5; i++) {
