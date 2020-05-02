@@ -86,16 +86,6 @@ bool HASH_TABLE_TYPE::GetValue(Transaction *transaction, const KeyType &key, std
  *****************************************************************************/
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_TYPE::Insert(Transaction *transaction, const KeyType &key, const ValueType &value) {
-
-  if(size_ == num_buckets_) Resize(num_buckets_);
-
-  std::vector<ValueType> vals{};
-  GetValue(transaction, key, &vals);
-  for(ValueType val: vals)
-  {
-    if(val == value) return false; // value already in hashtable
-  }
-
   uint64_t hash = hash_fn_.GetHash(key) % num_buckets_;
   HashTableHeaderPage* header_page = reinterpret_cast<HashTableHeaderPage *>(buffer_pool_manager_->FetchPage(header_page_id_));
 
@@ -107,12 +97,19 @@ bool HASH_TABLE_TYPE::Insert(Transaction *transaction, const KeyType &key, const
     Page* page = buffer_pool_manager_->FetchPage(header_page->GetBlockPageId(block_idx));
     auto block_page =  reinterpret_cast<HashTableBlockPage<KeyType,ValueType,KeyComparator> *>(page);
 
-    if(!block_page->IsReadable(bucket_idx))
+    if(block_page->IsReadable(bucket_ind) && 
+        comparator_(key, block_page->KeyAt(bucket_ind)) == 0 && value == block_page->ValueAt(bucket_idx))
+    {
+      buffer_pool_manager_->UnpinPage(page->GetPageId(), true);
+      break;
+    }
+    if (!block_page->IsOccupied(bucket_idx))
     {
       block_page->Insert(bucket_idx, key, value);
       buffer_pool_manager_->UnpinPage(page->GetPageId(), true);
-      buffer_pool_manager_->UnpinPage(header_page_id_, false);
       size_++;
+      header_page->SetSize(size_);
+      buffer_pool_manager_->UnpinPage(header_page_id_, true);
       return true;
     }
     buffer_pool_manager_->UnpinPage(page->GetPageId(), false);
@@ -150,8 +147,9 @@ bool HASH_TABLE_TYPE::Remove(Transaction *transaction, const KeyType &key, const
         {
           block_page->Remove(bucket_idx);
           buffer_pool_manager_->UnpinPage(page->GetPageId(), true);
-          buffer_pool_manager_->UnpinPage(header_page_id_, false);
           size_--;
+          header_page->SetSize(size_);
+          buffer_pool_manager_->UnpinPage(header_page_id_, false);
           return true;
         }
       }
@@ -169,14 +167,13 @@ template <typename KeyType, typename ValueType, typename KeyComparator>
 void HASH_TABLE_TYPE::Resize(size_t initial_size) 
 {
   num_buckets_ = initial_size * 2;
-  num_blocks_ = num_buckets_ / BUFFER_POOL_SIZE + 1;
+  num_blocks_ = (num_buckets_-1) / BUFFER_POOL_SIZE + 1;
 
   page_id_t old_page_id = header_page_id_;
   HashTableHeaderPage* old_header = reinterpret_cast<HashTableHeaderPage *>(buffer_pool_manager_->FetchPage(header_page_id_));
 
   Page *page = buffer_pool_manager_->NewPage(&header_page_id_);
   HashTableHeaderPage* header_page = reinterpret_cast<HashTableHeaderPage *>(page);
-  header_page->SetSize(size_);
   header_page->SetPageId(header_page_id_);
   
   page_id_t block_page_id;
@@ -188,21 +185,25 @@ void HASH_TABLE_TYPE::Resize(size_t initial_size)
 
   buffer_pool_manager_->UnpinPage(header_page_id_, true);
 
-  size_t old_blocks = initial_size / BUFFER_POOL_SIZE + 1;
+  size_=0;
+  size_t old_blocks = (initial_size-1) / BUFFER_POOL_SIZE + 1;
   for(size_t block_idx = 0; block_idx < old_blocks; block_idx++)
   {
     Page* page = buffer_pool_manager_->FetchPage(old_header->GetBlockPageId(block_idx));
-    auto block_page =  reinterpret_cast<HashTableBlockPage<KeyType,ValueType,KeyComparator> *>(page);
+    HASH_TABLE_BLOCK_TYPE* block_page =  reinterpret_cast<HASH_TABLE_BLOCK_TYPE *>(page);
 
     for(size_t bucket_idx = 0; bucket_idx < BUFFER_POOL_SIZE; bucket_idx++)
     {
-      Insert(nullptr, block_page->KeyAt(bucket_idx), block_page->ValueAt(bucket_idx));
+      if(block_page->IsReadable(bucket_idx))
+      {
+        Insert(nullptr, block_page->KeyAt(bucket_idx), block_page->ValueAt(bucket_idx));
+      }
     }
 
     buffer_pool_manager_->UnpinPage(page->GetPageId(), false);
     buffer_pool_manager_->DeletePage(page->GetPageId());
   }
-  
+  buffer_pool_manager_->UnpinPage(old_page_id);
   buffer_pool_manager_->DeletePage(old_page_id);
 }
 
